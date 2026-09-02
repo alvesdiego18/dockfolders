@@ -27,7 +27,9 @@ final class BalloonContent: NSView {
     private var highlighted: HoverRow?
 
     var onOpen: ((_ keepOpen: Bool) -> Void)?
-    var onNeedsResize: (() -> Void)?
+    /// `concurrent`, quando presente, roda dentro da animação de redimensionamento do
+    /// balão — usado pelo accordion para dissolver a foto do conteúdo anterior.
+    var onNeedsResize: ((_ concurrent: (() -> Void)?) -> Void)?
     var onAddFolder: (() -> Void)?
     var onCreateGroup: (() -> Void)?
     var onToggleLoginItem: (() -> Void)?
@@ -113,6 +115,40 @@ final class BalloonContent: NSView {
         needsLayout = true
     }
 
+    /// Fotografa o conteúdo atual numa camada por cima e devolve um bloco que a dissolve.
+    /// O bloco roda dentro da animação de redimensionamento do balão, então as linhas
+    /// que aparecem/somem no accordion trocam por baixo de um cross-dissolve — nunca
+    /// saltam. Devolve `nil` quando ainda não há o que fotografar (primeira exibição).
+    private func snapshotForCrossfade() -> (() -> Void)? {
+        guard bounds.width > 1, bounds.height > 1,
+              let rep = bitmapImageRepForCachingDisplay(in: bounds) else { return nil }
+        cacheDisplay(in: bounds, to: rep)
+        let image = NSImage(size: bounds.size)
+        image.addRepresentation(rep)
+
+        let ghost = NSImageView()
+        ghost.image = image
+        ghost.imageScaling = .scaleNone
+        ghost.imageAlignment = .alignTop
+        ghost.wantsLayer = true
+        ghost.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(ghost, positioned: .above, relativeTo: nil)
+        NSLayoutConstraint.activate([
+            ghost.topAnchor.constraint(equalTo: topAnchor),
+            ghost.leadingAnchor.constraint(equalTo: leadingAnchor),
+            ghost.trailingAnchor.constraint(equalTo: trailingAnchor),
+            ghost.heightAnchor.constraint(equalToConstant: bounds.height),
+        ])
+
+        return { [weak ghost] in
+            guard let ghost else { return }
+            ghost.animator().alphaValue = 0
+            DispatchQueue.main.asyncAfter(deadline: .now() + BalloonPanel.resizeDuration + 0.1) {
+                ghost.removeFromSuperview()
+            }
+        }
+    }
+
     // MARK: linhas
 
     private func folderRow(_ item: FolderItem, inGroup groupID: UUID?) -> HoverRow {
@@ -133,9 +169,9 @@ final class BalloonContent: NSView {
         let header = GroupHeaderRow(group: g, isOpen: isOpen)
         header.onClick = { [weak self] _ in
             guard let self else { return }
-            self.store.setOpenGroup(g.id)   // accordion exclusivo
-            self.rebuild()
-            self.onNeedsResize?()
+            let fade = self.snapshotForCrossfade()   // foto do estado atual
+            self.store.setOpenGroup(g.id)            // accordion exclusivo
+            self.onNeedsResize?(fade)                // rebuild + resize animam sob a foto
         }
         header.onOpenAll = { [weak self] in
             Opening.openAll(g.folders.filter(\.isAvailable).map { ($0, $0.primaryOpener) })
@@ -163,14 +199,14 @@ final class BalloonContent: NSView {
             add("Remover do grupo") { [weak self] in
                 guard let self else { return }
                 self.store.moveToLoose(itemID: item.id)
-                self.rebuild(); self.onNeedsResize?()
+                self.rebuild(); self.onNeedsResize?(nil)
             }
         }
         m.addItem(.separator())
         add("Remover") { [weak self] in
             guard let self else { return }
             self.store.remove(itemID: item.id)
-            self.rebuild(); self.onNeedsResize?()
+            self.rebuild(); self.onNeedsResize?(nil)
         }
         return m
     }
@@ -198,7 +234,7 @@ final class BalloonContent: NSView {
         add("Excluir grupo") { [weak self] in
             guard let self else { return }
             self.store.deleteGroup(g.id)
-            self.rebuild(); self.onNeedsResize?()
+            self.rebuild(); self.onNeedsResize?(nil)
         }
         return m
     }
@@ -227,7 +263,7 @@ final class BalloonContent: NSView {
                     guard let self, self.springTarget == gid else { return }
                     self.store.setOpenGroup(gid)
                     self.rebuild()
-                    self.onNeedsResize?()
+                    self.onNeedsResize?(nil)
                 }
             }
         } else {
@@ -258,7 +294,7 @@ final class BalloonContent: NSView {
         case .groupFolderAt(let gid, let i): store.move(itemID: id, toGroup: gid, at: i)
         }
         rebuild()
-        onNeedsResize?()
+        onNeedsResize?(nil)
         return true
     }
 

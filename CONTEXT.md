@@ -67,7 +67,10 @@ painel flutuante — decisão tomada depois de medir que o erro horizontal da he
 quando a permissão de Acessibilidade é concedida.
 
 **Redimensionamento.** Cresce e encolhe **para cima**, com a borda inferior e a seta fixas.
-Animado em ~0,2s com easing. **Nunca tem ScrollView.**
+Animado em ~0,22s com easing (`easeInEaseOut`): o frame da janela e o contorno da máscara
+de cantos interpolam juntos. Ao abrir/fechar um grupo, uma foto do conteúdo anterior é
+dissolvida por cima durante a mesma animação, para as linhas do accordion trocarem sem
+salto. Respeita "Reduzir movimento". **Nunca tem ScrollView.**
 
 ## Privacidade
 

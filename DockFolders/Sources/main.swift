@@ -32,7 +32,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.onDismiss = { [weak self] in self?.hide() }
 
         content.onOpen = { [weak self] keepOpen in if !keepOpen { self?.hide() } }
-        content.onNeedsResize = { [weak self] in self?.present(animated: true) }
+        content.onNeedsResize = { [weak self] concurrent in
+            self?.present(animated: true, concurrent: concurrent)
+        }
         content.onAddFolder = { [weak self] in self?.addFolder() }
         content.onCreateGroup = { [weak self] in self?.createGroup() }
         content.onToggleLoginItem = { LoginItem.toggle() }
@@ -61,7 +63,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: apresentação
 
-    private func present(animated: Bool) {
+    /// `concurrent` (vindo do accordion) roda dentro da animação de redimensionamento,
+    /// dissolvendo a foto do conteúdo anterior enquanto o balão cresce ou encolhe.
+    private func present(animated: Bool, concurrent: (() -> Void)? = nil) {
         let anchor = DockTileLocator.locate(appNames: ["DockFolders"])
         content.isApproximate = (anchor.confidence == .approximate)
         content.setBottomInset(anchor.confidence == .precise ? BalloonPanel.arrowHeight : 0)
@@ -72,7 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let maxWidth = (screen?.visibleFrame.width ?? 900) - 40
         panel.present(contentWidth: content.measuredWidth(maxWidth: maxWidth),
                       contentHeight: content.measuredHeight,
-                      anchor: anchor, animated: animated)
+                      anchor: anchor, animated: animated, concurrent: concurrent)
         NSApp.activate(ignoringOtherApps: true)
     }
 
