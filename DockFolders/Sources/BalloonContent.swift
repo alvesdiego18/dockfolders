@@ -138,9 +138,7 @@ final class BalloonContent: NSView {
             self.onNeedsResize?()
         }
         header.onOpenAll = { [weak self] in
-            for item in g.folders where item.isAvailable {
-                Opening.open(item, with: item.primaryOpener)
-            }
+            Opening.openAll(g.folders.filter(\.isAvailable).map { ($0, $0.primaryOpener) })
             self?.onOpen?(false)
         }
         header.onRename = { [weak self] novo in
@@ -192,9 +190,7 @@ final class BalloonContent: NSView {
             header?.beginRename()
         }
         add("Abrir tudo") { [weak self] in
-            for item in g.folders where item.isAvailable {
-                Opening.open(item, with: item.primaryOpener)
-            }
+            Opening.openAll(g.folders.filter(\.isAvailable).map { ($0, $0.primaryOpener) })
             self?.onOpen?(false)
         }
         m.addItem(.separator())

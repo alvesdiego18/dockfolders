@@ -120,6 +120,16 @@ Cabeçalho do grupo:
 - Botão "abrir tudo" no canto direito: dispara cada pasta do grupo no seu app configurado
 - Menu de contexto: *Renomear · Abrir tudo · Excluir grupo*
 
+**"Abrir tudo" nunca empacota várias pastas numa única chamada ao sistema — uma por vez.**
+Medido diretamente contra apps reais: dar duas pastas ao VS Code numa só chamada faz ele
+tratar como pedido de *workspace multi-root* (os dois projetos caem juntos numa única
+janela); o Android Studio, na mesma situação, ignora tudo além da primeira. O Xcode não se
+importa, porque não tem esse conceito de mesclagem — mas empacotar quebrava os outros dois,
+então a regra é uma pasta por chamada para todos. Entre duas aberturas seguidas do MESMO
+app, há um intervalo mínimo de 0,9s (medido: menos que isso e o VS Code às vezes ainda trata
+a segunda janela como reaproveitável, mesclando de novo); itens de apps diferentes saem em
+sequência sem espera, já que a corrida só existe dentro do mesmo app.
+
 Excluir um grupo **promove suas pastas a avulsas** — nada é destruído.
 Grupos vazios são permitidos e normais (todo grupo nasce vazio).
 O grupo aberto é persistido e sobrevive a reinício do Mac. **Ao reabrir o balão** (relançar
