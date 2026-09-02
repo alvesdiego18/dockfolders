@@ -1,4 +1,5 @@
-# Artefatos de build — gerados por build.sh / prototype/**/build.sh, não fonte.
+# Artefatos de build — gerados por build.sh, não fonte.
+DockFolders/dist/
 *.app/
 *.dmg
 

@@ -17,6 +17,10 @@ final class ActionButton: NSButton {
         self.init(frame: .zero)
         self.image = image
         self.imageScaling = .scaleProportionallyDown
+        // Sem isto, o NSButton reserva espaço interno para um título mesmo com
+        // title = "", o que desloca o ícone do centro real do botão — o quadro fica
+        // centralizado, mas o desenho dentro dele não, e o nome parece desalinhado.
+        self.imagePosition = .imageOnly
         self.toolTip = tooltip
         self.isBordered = false
         self.title = ""
@@ -181,7 +185,7 @@ final class FolderRow: HoverRow {
             // que resolve para a distância mínima entre texto e ícones.
             openers.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
             openers.centerYAnchor.constraint(equalTo: centerYAnchor),
-            name.trailingAnchor.constraint(lessThanOrEqualTo: openers.leadingAnchor, constant: -12),
+            name.trailingAnchor.constraint(lessThanOrEqualTo: openers.leadingAnchor, constant: -18),
         ])
     }
 
@@ -231,6 +235,7 @@ final class GroupHeaderRow: HoverRow {
                                               accessibilityDescription: "Abrir tudo")!,
                                target: self, action: #selector(openAllTapped))
         openAll.isBordered = false
+        openAll.imagePosition = .imageOnly
         openAll.toolTip = "Abrir todas as pastas do grupo"
         openAll.isEnabled = !group.folders.isEmpty
         openAll.alphaValue = group.folders.isEmpty ? 0.3 : 1

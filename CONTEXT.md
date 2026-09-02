@@ -28,7 +28,7 @@ seta ancorada ao ícone, sombra do sistema, claro/escuro automático.
 do tile correspondente. Fallback heurístico quando a permissão não foi concedida ou a árvore
 AX mudou.
 
-### Validado empiricamente (protótipo `prototype/locator`, macOS 26.6.2)
+### Validado empiricamente (harness de protótipo, macOS 26.6.2 — descartado após validar)
 
 Caminho preciso funciona. A árvore AX do Dock entrega 17 itens com títulos legíveis, e o tile
 do app é localizável.
@@ -78,7 +78,7 @@ pelo WindowServer, não por detecção de transmissão.
 Em `#if DEBUG` a captura é liberada, para permitir verificação visual durante o
 desenvolvimento. O binário de release é idêntico ao de proteção total.
 
-### Validado empiricamente (protótipo, macOS 26.6.2)
+### Validado empiricamente (protótipo, macOS 26.6.2 — descartado após validar)
 
 Testado contra compartilhamento de tela real: a janela criada com `sharingType = .none`
 **não aparece na transmissão**. Premissa confirmada.
@@ -219,9 +219,10 @@ Nenhuma é bloqueante; todas são reversíveis.
 ## Ordem de construção
 
 1. ✅ **Protótipo de validação de `sharingType = .none`** — premissa confirmada contra
-   compartilhamento real de tela. Ver `prototype/`.
-2. ✅ **Posicionamento** (AX + fallback heurístico) — validado em `prototype/locator/`,
-   módulo em `DockFolders/Sources/DockTileLocator.swift`.
+   compartilhamento real de tela (harness descartado depois de validar; achados registrados
+   acima, em "Privacidade").
+2. ✅ **Posicionamento** (AX + fallback heurístico) — validado com um harness de medição
+   (idem, descartado depois); módulo em `DockFolders/Sources/DockTileLocator.swift`.
 3. ✅ **Modelo de dados e persistência** — `Sources/Store.swift`, com 17 asserções em
    `Tests/main.swift` cobrindo as regras estruturais.
 4. ✅ **Lista, grupos, accordion** — `Sources/BalloonPanel.swift`, `BalloonContent.swift`,

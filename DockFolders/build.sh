@@ -9,10 +9,12 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 APP_NAME="DockFolders"
-APP="$APP_NAME.app"
+DIST="dist"
+APP="$DIST/$APP_NAME.app"
 DEBUG_FLAG=""
 [ "${DEBUG:-0}" = "1" ] && DEBUG_FLAG="-D DEBUG"
 
+mkdir -p "$DIST"
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/"
 cat > "$APP/Contents/Info.plist" <<'PLIST'
@@ -53,7 +55,7 @@ fi
 # do .dmg explica como liberar.
 
 VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
-DMG_NAME="${APP_NAME}-${VERSION}.dmg"
+DMG_NAME="$DIST/${APP_NAME}-${VERSION}.dmg"
 STAGING=$(mktemp -d)
 trap 'rm -rf "$STAGING"' EXIT
 
