@@ -64,6 +64,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>NSPrincipalClass</key><string>NSApplication</string>
     <key>NSHighResolutionCapable</key><true/>
+    <key>NSAppleEventsUsageDescription</key><string>Para abrir o Terminal já rodando o comando configurado numa pasta.</string>
 </dict>
 </plist>
 PLIST

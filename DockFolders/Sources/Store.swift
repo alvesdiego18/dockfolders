@@ -17,15 +17,17 @@ import Foundation
 ///
 /// `bundleID == nil` significa Finder. `targetPath` aponta para um arquivo específico
 /// dentro da pasta — é o que o Xcode exige (`.xcworkspace`/`.xcodeproj`); nulo abre a
-/// própria pasta.
+/// própria pasta. `command`, só para o Terminal, é um comando de shell rodado logo
+/// depois do `cd` na pasta (ex.: `claude`); nulo apenas abre a pasta no Terminal.
 struct Opener: Codable, Equatable, Identifiable {
     var id: UUID = UUID()
     var bundleID: String?
     var targetPath: String?
+    var command: String?
 
     static let finder = Opener(bundleID: nil, targetPath: nil)
-    static func app(_ bundleID: String, target: String? = nil) -> Opener {
-        Opener(bundleID: bundleID, targetPath: target)
+    static func app(_ bundleID: String, target: String? = nil, command: String? = nil) -> Opener {
+        Opener(bundleID: bundleID, targetPath: target, command: command)
     }
 }
 

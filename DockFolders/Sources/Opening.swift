@@ -12,6 +12,14 @@ enum Opening {
     }
 
     static func open(_ item: FolderItem, with opener: Opener, completion: (() -> Void)? = nil) {
+        // Terminal com comando: abre uma janela nova, entra na pasta e roda o comando.
+        if opener.bundleID == "com.apple.Terminal",
+           let command = opener.command?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !command.isEmpty {
+            openTerminal(at: item.path, running: command, completion: completion)
+            return
+        }
+
         let url = targetURL(item, opener)
         guard let bundleID = opener.bundleID else {
             NSWorkspace.shared.open(url)          // Finder
@@ -69,6 +77,32 @@ enum Opening {
         step(0)
     }
 
+    /// Abre um Terminal novo já rodando `command` dentro de `path`.
+    ///
+    /// Via `do script` do AppleScript — o macOS pede autorização para controlar o
+    /// Terminal na primeira vez (opt-in por recurso, como a Acessibilidade). O `cd`
+    /// vai entre aspas para aguentar espaços no caminho; caminho e comando são
+    /// escapados para o literal de string do AppleScript.
+    private static func openTerminal(at path: String, running command: String,
+                                     completion: (() -> Void)?) {
+        func esc(_ s: String) -> String {
+            s.replacingOccurrences(of: "\\", with: "\\\\")
+             .replacingOccurrences(of: "\"", with: "\\\"")
+        }
+        let source = """
+        tell application "Terminal"
+            activate
+            do script "cd \\"\(esc(path))\\" && \(esc(command))"
+        end tell
+        """
+        DispatchQueue.global(qos: .userInitiated).async {
+            var err: NSDictionary?
+            NSAppleScript(source: source)?.executeAndReturnError(&err)
+            if let err { NSLog("abertura no Terminal falhou: \(err)") }
+            DispatchQueue.main.async { completion?() }
+        }
+    }
+
     static func appURL(for bundleID: String) -> URL? {
         NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
     }
@@ -89,9 +123,11 @@ enum Opening {
             .replacingOccurrences(of: ".app", with: "")
     }
 
-    /// Texto do tooltip: só o app, ou "app — arquivo" quando há alvo específico (Q35).
+    /// Texto do tooltip: só o app, "app — comando" quando o Terminal roda algo, ou
+    /// "app — arquivo" quando há alvo específico (Q35).
     static func tooltip(for opener: Opener) -> String {
         let name = appName(for: opener)
+        if let c = opener.command, !c.isEmpty { return "\(name) — \(c)" }
         guard let t = opener.targetPath, !t.isEmpty else { return name }
         return "\(name) — \((t as NSString).lastPathComponent)"
     }

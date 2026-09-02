@@ -66,11 +66,24 @@ final class BalloonContent: NSView {
 
     var measuredHeight: CGFloat { stack.fittingSize.height - bottomInsetConstraint.constant }
 
-    /// O balão se ajusta ao nome de pasta mais longo. O teto é físico — a largura útil
-    /// da tela — e não um limite de design.
+    /// Largura fixa do balão: a maior linha possível — toda pasta (avulsa ou dentro de
+    /// qualquer grupo, aberto ou não) e todo cabeçalho de grupo, medidas com o layout
+    /// real das linhas. Fixa porque não depende de qual grupo está aberto: abrir ou
+    /// fechar o accordion nunca muda a largura, e nenhum texto trunca. O teto é físico
+    /// — a largura útil da tela —, não um limite de design.
     func measuredWidth(maxWidth: CGFloat) -> CGFloat {
-        let needed = stack.fittingSize.width
-        return min(max(needed, 240), maxWidth)
+        var widest: CGFloat = BalloonPanel.minWidth
+        func consider(_ view: NSView) {
+            view.layoutSubtreeIfNeeded()
+            widest = max(widest, ceil(view.fittingSize.width))
+        }
+        let d = store.data
+        for item in d.loose { consider(FolderRow(item: item, indent: 0) { _ in }) }
+        for g in d.groups {
+            consider(GroupHeaderRow(group: g, isOpen: false))
+            for item in g.folders { consider(FolderRow(item: item, indent: 16) { _ in }) }
+        }
+        return min(widest, maxWidth)
     }
 
     // MARK: montagem

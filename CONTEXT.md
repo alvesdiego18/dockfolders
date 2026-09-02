@@ -159,6 +159,13 @@ alvo específico dentro da pasta — o Xcode precisa do `.xcworkspace`/`.xcodepr
 Terminal e editores abrem a própria pasta. O alvo é **sempre escolhido à mão** (Q34b): sem
 autodetecção.
 
+**Abertura de Terminal aceita um comando** (opcional). Ao adicionar o Terminal como abertura,
+um campo pede um comando de shell — o Terminal abre uma janela nova, entra na pasta e roda o
+comando (ex.: `claude`). Em branco, só abre a pasta. Implementado via `do script` do
+AppleScript, o que dispara a autorização "controlar o Terminal" na primeira vez — opt-in por
+recurso, como a Acessibilidade. Pode haver mais de uma abertura de Terminal na mesma pasta
+(uma sem comando, outra com `claude`, etc.), respeitando o teto de três.
+
 - Clicar no **nome** abre com a **principal** (a primeira da lista); o ícone à esquerda a
   representa, então ela não se repete entre os ícones à direita
 - Clicar num **ícone à direita** abre com aquela abertura
@@ -167,8 +174,11 @@ autodetecção.
 - Quando a principal é o **Finder**, o ícone é a pasta genérica do macOS
   (`NSWorkspace.icon(for: .folder)`), não o rosto do app Finder
 
-**O nome da pasta nunca é truncado**: o balão se ajusta em largura ao nome mais longo, com a
-largura útil da tela como único teto.
+**O nome da pasta nunca é truncado**: a largura do balão é **fixa**, calculada a partir da
+linha mais larga possível — toda pasta (avulsa ou dentro de qualquer grupo, aberto ou não),
+todo cabeçalho de grupo, incluindo os ícones de abertura — medida com o layout real das
+linhas. Fixa de propósito: abrir ou fechar o accordion nunca muda a largura. Único teto é a
+largura útil da tela.
 
 Path que não resolve fica **esmaecido e não clicável** (volta sozinho quando o volume
 reconecta).

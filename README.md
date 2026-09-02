@@ -18,7 +18,8 @@ pasta pode ser aberta com até três aplicativos diferentes — a pasta em si, u
   ou para um arquivo específico dentro dela (o Xcode, por exemplo, precisa do
   `.xcworkspace`, não da pasta).
 - **Atalho de Terminal.** Um botão dedicado adiciona o Terminal como abertura sem
-  precisar navegar até `/Applications`.
+  precisar navegar até `/Applications`. Aceita um comando opcional: o Terminal abre
+  na pasta e já roda o comando (por exemplo `claude`).
 - **Arrastar para organizar.** Pastas soltas viram parte de um grupo por drag &
   drop; pairar sobre um grupo fechado o expande sozinho (spring-loading, como no
   Finder).
@@ -78,6 +79,10 @@ Manter no Dock**, senão ele some quando o app for encerrado.
   *Configurar aberturas…*. A primeira da lista é a principal (a que o clique no
   nome dispara); as outras aparecem como ícones à direita, com tooltip ao passar
   o mouse.
+- **Terminal com comando:** na janela de aberturas, botão *Terminal* → digite um
+  comando (ex.: `claude`) ou deixe em branco. Na primeira vez o macOS pede
+  autorização para o DockFolders controlar o Terminal. Para trocar o comando,
+  remova a abertura e adicione de novo.
 - **Criar um grupo:** `+` → *Criar grupo…*. Ele nasce vazio — arraste pastas para
   dentro dele.
 - **Abrir tudo de um grupo:** botão no canto direito do cabeçalho do grupo, abre
@@ -130,6 +135,8 @@ swiftc -O DockFolders/Sources/Store.swift DockFolders/Tests/main.swift -o /tmp/d
 | Volume externo desconectado | Toda pasta nele fica esmaecida, sem indicar a causa |
 | Árvore de Acessibilidade do Dock muda num update do macOS | O app cai no modo de posicionamento aproximado, sem seta |
 | App configurado como abertura foi desinstalado | A abertura cai para o Finder na hora de abrir |
+| Autorização de controlar o Terminal negada | A abertura de Terminal com comando não faz nada; libere em Ajustes do Sistema → Privacidade e Segurança → Automação |
+| Comando do Terminal precisa mudar | Não há edição no lugar — remova a abertura e adicione de novo |
 | Build de release | Sem assinatura de Developer ID nem notarização — Gatekeeper avisa na primeira abertura em outro Mac |
 
 ## Design e decisões

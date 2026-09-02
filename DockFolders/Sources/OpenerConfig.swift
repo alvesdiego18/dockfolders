@@ -111,15 +111,29 @@ final class OpenerConfigWindow: NSObject {
         for (i, opener) in openers.enumerated() {
             list.addArrangedSubview(row(for: opener, at: i))
         }
-        let hasTerminal = openers.contains { $0.bundleID == "com.apple.Terminal" }
         addButton.isEnabled = openers.count < FolderItem.maxOpeners
-        terminalButton.isEnabled = openers.count < FolderItem.maxOpeners && !hasTerminal
+        terminalButton.isEnabled = openers.count < FolderItem.maxOpeners
         window.setContentSize(NSSize(width: 420, height: 150 + CGFloat(max(openers.count, 1)) * 34))
     }
 
     @objc private func addTerminal() {
         guard Opening.appURL(for: "com.apple.Terminal") != nil else { return }
-        openers.append(.app("com.apple.Terminal"))   // sempre abre a pasta, sem alvo
+
+        // Comando opcional: o Terminal abre na pasta e, se houver comando, roda-o
+        // logo depois (ex.: `claude`). Em branco, só abre a pasta.
+        let alert = NSAlert()
+        alert.messageText = "Terminal"
+        alert.informativeText = "Comando para o Terminal rodar ao abrir (opcional). "
+            + "Ex.: claude. Em branco, só abre a pasta no Terminal."
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        field.placeholderString = "claude"
+        alert.accessoryView = field
+        alert.addButton(withTitle: "Adicionar")
+        alert.addButton(withTitle: "Cancelar")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        let command = field.stringValue.trimmingCharacters(in: .whitespaces)
+        openers.append(.app("com.apple.Terminal", command: command.isEmpty ? nil : command))
         rebuild()
     }
 
@@ -133,8 +147,15 @@ final class OpenerConfigWindow: NSObject {
         icon.imageScaling = .scaleProportionallyDown
         icon.translatesAutoresizingMaskIntoConstraints = false
 
-        let target = opener.targetPath.map { (($0 as NSString).lastPathComponent) } ?? "a pasta"
-        let label = NSTextField(labelWithString: "\(Opening.appName(for: opener))  ·  \(target)")
+        let detail: String
+        if let cmd = opener.command, !cmd.isEmpty {
+            detail = "$ \(cmd)"
+        } else if let t = opener.targetPath, !t.isEmpty {
+            detail = (t as NSString).lastPathComponent
+        } else {
+            detail = "a pasta"
+        }
+        let label = NSTextField(labelWithString: "\(Opening.appName(for: opener))  ·  \(detail)")
         label.font = .systemFont(ofSize: 12)
         label.lineBreakMode = .byTruncatingMiddle
         label.translatesAutoresizingMaskIntoConstraints = false

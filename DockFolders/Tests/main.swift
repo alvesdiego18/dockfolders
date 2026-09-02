@@ -72,6 +72,30 @@ check(multi.openers[0].targetPath == "/tmp/p.xcworkspace", "alvo específico pre
 store.setOpeners([.finder, .finder, .finder, .finder], for: b.id)
 check(store.data.loose.first { $0.id == b.id }!.openers.count == 3, "teto de três respeitado")
 
+print("\n— comando de Terminal por abertura")
+store.setOpeners([.app("com.apple.Terminal", command: "claude"),
+                  .app("com.apple.Terminal")], for: b.id)
+let term = store.data.loose.first { $0.id == b.id }!
+check(term.openers[0].command == "claude", "comando guardado na abertura")
+check(term.openers[1].command == nil, "abertura de Terminal sem comando fica nula")
+store.save()
+let termReload = Store(url: tmp)
+check(termReload.data.loose.first { $0.id == b.id }!.openers[0].command == "claude",
+      "comando sobrevive ao round-trip em disco")
+
+print("\n— JSON sem a chave 'command' decodifica (compat)")
+let noCmdURL = URL(fileURLWithPath: NSTemporaryDirectory())
+    .appendingPathComponent("dockfolders-nocmd-\(UUID().uuidString)/folders.json")
+try! FileManager.default.createDirectory(at: noCmdURL.deletingLastPathComponent(),
+                                         withIntermediateDirectories: true)
+try! """
+{"version":1,"loose":[{"id":"\(UUID().uuidString)","path":"/Applications",
+ "openers":[{"id":"\(UUID().uuidString)","bundleID":"com.apple.Terminal"}]}],
+ "groups":[],"appUsage":{}}
+""".data(using: .utf8)!.write(to: noCmdURL)
+let noCmd = Store(url: noCmdURL)
+check(noCmd.data.loose.first?.openers.first?.command == nil, "abertura antiga sem 'command' vira nil")
+
 print("\n— migração do formato antigo (abridor único)")
 let legacyURL = URL(fileURLWithPath: NSTemporaryDirectory())
     .appendingPathComponent("dockfolders-legacy-\(UUID().uuidString)/folders.json")
