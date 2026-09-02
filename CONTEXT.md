@@ -122,7 +122,11 @@ Cabeçalho do grupo:
 
 Excluir um grupo **promove suas pastas a avulsas** — nada é destruído.
 Grupos vazios são permitidos e normais (todo grupo nasce vazio).
-O grupo aberto é persistido e sobrevive a reinício do Mac.
+O grupo aberto é persistido e sobrevive a reinício do Mac. **Ao reabrir o balão** (relançar
+o app, ou clicar no ícone do Dock com o balão fechado) — nunca em cliques dentro de uma
+sessão já aberta — o grupo que estava aberto pula para o topo da lista de grupos. Interagir
+com o accordion enquanto o balão está visível não reordena nada; a reordenação acontece uma
+vez, exatamente no instante da transição fechado→aberto.
 
 ### Orçamento de altura
 

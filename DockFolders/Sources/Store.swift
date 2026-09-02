@@ -215,6 +215,17 @@ final class Store {
         save()
     }
 
+    /// O grupo que estava aberto vai para o topo — só no momento de reabrir o balão
+    /// depois de ele ter sido fechado (relançar o app, ou clicar no Dock com o balão
+    /// fechado), nunca enquanto o balão permanece aberto e você navega entre grupos.
+    func promoteOpenGroupToFront() {
+        guard let openID = data.openGroupID,
+              let i = data.groups.firstIndex(where: { $0.id == openID }), i != 0 else { return }
+        let g = data.groups.remove(at: i)
+        data.groups.insert(g, at: 0)
+        save()
+    }
+
     /// Ordena o dropdown de apps por frequência de uso.
     func appsByUsage() -> [String] {
         data.appUsage.sorted { ($0.value, $1.key) > ($1.value, $0.key) }.map(\.key)

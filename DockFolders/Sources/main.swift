@@ -41,14 +41,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // O tile do Dock só existe depois que o app aparece nele.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            self?.present(animated: false)
+            self?.openBalloon()
         }
     }
 
     /// Clique no ícone do Dock com o app já rodando (Q6b + Q7b: toggle).
     func applicationShouldHandleReopen(_ s: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        if panel.isVisible { hide() } else { present(animated: false) }
+        if panel.isVisible { hide() } else { openBalloon() }
         return true
+    }
+
+    /// Transição de fechado → aberto: o único momento em que o grupo que ficou aberto
+    /// pula para o topo da lista. Diferente de `present`, que também redesenha o balão
+    /// já visível (abrir um grupo, adicionar pasta) — ali a ordem não deve mudar.
+    private func openBalloon() {
+        store.promoteOpenGroupToFront()
+        present(animated: false)
     }
 
     // MARK: apresentação
