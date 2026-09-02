@@ -49,6 +49,11 @@ de abrir; isso é esperado, não um app corrompido).
 ./DockFolders/build.sh
 ```
 
+O script pergunta a versão a buildar, já preenchida com a atual (arquivo
+`DockFolders/VERSION`) — Enter mantém, ou edite para subir. O valor é gravado de
+volta em `VERSION` e usado no `Info.plist` e no nome do `.dmg`. Para pular o
+prompt (CI, por exemplo), passe `VERSION=1.2 ./DockFolders/build.sh`.
+
 Gera `DockFolders/dist/DockFolders.app` (build de release, protegido contra
 captura de tela) e `DockFolders/dist/DockFolders-<versão>.dmg` (pronto para
 instalar em outro Mac). Para testar localmente sem gerar o `.dmg`:

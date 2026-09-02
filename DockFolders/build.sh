@@ -5,6 +5,15 @@
 #                        verificar a UI por screenshot), sem gerar o .dmg.
 #   ./build.sh           build de release: sharingType = .none incondicional, e
 #                        gera o .dmg pronto para instalar em outro Mac.
+#
+# A cada build o script pergunta a versão, já preenchida com a atual (arquivo
+# VERSION). Basta apertar Enter para manter, ou editar para subir. O valor
+# escolhido é gravado de volta em VERSION e usado no Info.plist e no nome do .dmg.
+#   VERSION=1.2 ./build.sh   define a versão sem prompt (útil em CI).
+
+# Reexecuta sob bash quando chamado como `sh build.sh` (o prompt de versão usa `read`).
+if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
+
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -14,10 +23,33 @@ APP="$DIST/$APP_NAME.app"
 DEBUG_FLAG=""
 [ "${DEBUG:-0}" = "1" ] && DEBUG_FLAG="-D DEBUG"
 
+# --- versão ----------------------------------------------------------------
+VERSION_FILE="VERSION"
+CURRENT_VERSION="0.1"
+[ -f "$VERSION_FILE" ] && CURRENT_VERSION="$(tr -d '[:space:]' < "$VERSION_FILE")"
+[ -n "$CURRENT_VERSION" ] || CURRENT_VERSION="0.1"
+
+if [ -n "${VERSION:-}" ]; then
+    :                                   # versão veio do ambiente, sem prompt
+elif [ -t 0 ]; then
+    if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+        # bash 4+: a versão atual já vem preenchida e editável na linha
+        read -r -e -i "$CURRENT_VERSION" -p "Versão a buildar: " VERSION
+    else
+        # bash 3.2 (padrão do macOS): a atual aparece entre colchetes, Enter mantém
+        read -r -p "Versão a buildar [$CURRENT_VERSION]: " VERSION
+    fi
+    VERSION="$(printf '%s' "${VERSION:-}" | tr -d '[:space:]')"
+    [ -n "$VERSION" ] || VERSION="$CURRENT_VERSION"
+else
+    VERSION="$CURRENT_VERSION"           # sem terminal: mantém a atual
+fi
+printf '%s\n' "$VERSION" > "$VERSION_FILE"
+
 mkdir -p "$DIST"
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/"
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -28,7 +60,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleExecutable</key><string>DockFolders</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>0.1</string>
+    <key>CFBundleShortVersionString</key><string>${VERSION}</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>NSPrincipalClass</key><string>NSApplication</string>
     <key>NSHighResolutionCapable</key><true/>
@@ -54,7 +86,6 @@ fi
 # para software sem Developer ID pago e notarizado pela Apple. O README dentro
 # do .dmg explica como liberar.
 
-VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
 DMG_NAME="$DIST/${APP_NAME}-${VERSION}.dmg"
 STAGING=$(mktemp -d)
 trap 'rm -rf "$STAGING"' EXIT
