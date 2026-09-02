@@ -1,0 +1,13 @@
+# Artefatos de build — gerados por build.sh / prototype/**/build.sh, não fonte.
+*.app/
+*.dmg
+
+# macOS
+.DS_Store
+
+# Ferramentas Swift/Xcode, para se o projeto crescer para SwiftPM/Xcode
+.build/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+xcuserdata/
