@@ -26,6 +26,8 @@ struct Opener: Codable, Equatable, Identifiable {
     var command: String?
 
     static let finder = Opener(bundleID: nil, targetPath: nil)
+    static let terminal = Opener(bundleID: "com.apple.Terminal", targetPath: nil)
+    static let defaultOpeners: [Opener] = [.finder, .terminal]
     static func app(_ bundleID: String, target: String? = nil, command: String? = nil) -> Opener {
         Opener(bundleID: bundleID, targetPath: target, command: command)
     }
@@ -48,7 +50,7 @@ private enum LegacyOpener: Codable {
 struct FolderItem: Codable, Identifiable, Equatable {
     var id: UUID = UUID()
     var path: String
-    var openers: [Opener] = [.finder]
+    var openers: [Opener] = Opener.defaultOpeners
 
     /// O primeiro da lista é o principal: é ele que o clique no nome dispara (Q33a).
     var primaryOpener: Opener { openers.first ?? .finder }
@@ -57,7 +59,7 @@ struct FolderItem: Codable, Identifiable, Equatable {
 
     enum CodingKeys: String, CodingKey { case id, path, openers, opener }
 
-    init(id: UUID = UUID(), path: String, openers: [Opener] = [.finder]) {
+    init(id: UUID = UUID(), path: String, openers: [Opener] = Opener.defaultOpeners) {
         self.id = id; self.path = path; self.openers = openers
     }
 
@@ -148,7 +150,7 @@ final class Store {
 
     /// Toda pasta nasce avulsa (Q26c); ir para um grupo é sempre um segundo passo.
     @discardableResult
-    func addLoose(path: String, openers: [Opener] = [.finder]) -> FolderItem {
+    func addLoose(path: String, openers: [Opener] = Opener.defaultOpeners) -> FolderItem {
         let item = FolderItem(path: path, openers: openers)
         data.loose.append(item)
         openers.forEach(recordUsage)
@@ -202,7 +204,7 @@ final class Store {
     }
 
     @discardableResult
-    func addFolder(path: String, toGroup groupID: UUID? = nil, openers: [Opener] = [.finder]) -> FolderItem {
+    func addFolder(path: String, toGroup groupID: UUID? = nil, openers: [Opener] = Opener.defaultOpeners) -> FolderItem {
         let item = FolderItem(path: path, openers: openers)
         if let groupID, let i = data.groups.firstIndex(where: { $0.id == groupID }) {
             data.groups[i].folders.append(item)

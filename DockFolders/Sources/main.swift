@@ -113,7 +113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             open.message = groupID != nil ? "Escolha uma pasta para adicionar ao grupo" : "Escolha uma pasta para adicionar"
             guard open.runModal() == .OK, let url = open.url else { return }
 
-            // Nasce com o Finder (padrão Mac) e navega imediatamente para seus detalhes
+            // Nasce com Finder e Terminal e navega imediatamente para seus detalhes
             let item = store.addFolder(path: url.path, toGroup: groupID)
             DispatchQueue.main.async { [weak self] in
                 self?.content.showFolderOptions(for: item.id)

@@ -29,6 +29,7 @@ final class BalloonContent: NSView {
     private var optionsPopover: NSPopover?
     private var activeFolderID: UUID?
     private weak var activeRow: HoverRow?
+    private var hoverTask: DispatchWorkItem?
     var onOpen: ((_ keepOpen: Bool) -> Void)?
     /// `concurrent`, quando presente, roda dentro da animação de redimensionamento do
     /// balão — usado pelo accordion para dissolver a foto do conteúdo anterior.
@@ -67,6 +68,11 @@ final class BalloonContent: NSView {
 
     required init?(coder: NSCoder) { fatalError() }
 
+    override func mouseDown(with event: NSEvent) {
+        closeOptionsPopover()
+        super.mouseDown(with: event)
+    }
+
     func setBottomInset(_ inset: CGFloat) { bottomInsetConstraint.constant = -inset }
 
     var measuredHeight: CGFloat {
@@ -93,6 +99,8 @@ final class BalloonContent: NSView {
     // MARK: balão de opções de pasta
 
     func handleEscape() -> Bool {
+        hoverTask?.cancel()
+        hoverTask = nil
         if optionsPopover?.isShown == true {
             closeOptionsPopover()
             return true
@@ -100,15 +108,19 @@ final class BalloonContent: NSView {
         return false
     }
 
-    func showFolderOptions(for item: FolderItem, relativeTo row: HoverRow) {
-        if optionsPopover?.isShown == true && activeFolderID == item.id {
-            closeOptionsPopover()
-            return
+    func showFolderOptions(for item: FolderItem, relativeTo row: HoverRow, toggleIfActive: Bool = false) {
+        if optionsPopover?.isShown == true {
+            if activeFolderID == item.id {
+                if toggleIfActive {
+                    closeOptionsPopover()
+                }
+                return
+            }
         }
-        closeOptionsPopover()
+        closeOptionsPopover(animated: false)
 
         let pop = NSPopover()
-        pop.behavior = .transient
+        pop.behavior = .applicationDefined
         pop.animates = true
         pop.delegate = self
         if let app = window?.appearance { pop.appearance = app }
@@ -125,6 +137,10 @@ final class BalloonContent: NSView {
         optionsView.onNeedsResize = { [weak pop, weak optionsView] in
             guard let pop, let optionsView else { return }
             pop.contentSize = optionsView.fittingSize
+        }
+        optionsView.onChange = { [weak self, weak row] in
+            guard let self, let updated = self.store.findItem(item.id) else { return }
+            (row as? FolderRow)?.updateIcon(for: updated.primaryOpener)
         }
         optionsView.withModal = self.withModal
 
@@ -154,7 +170,12 @@ final class BalloonContent: NSView {
         }
     }
 
-    func closeOptionsPopover() {
+    func closeOptionsPopover(animated: Bool = true) {
+        hoverTask?.cancel()
+        hoverTask = nil
+        if !animated {
+            optionsPopover?.animates = false
+        }
         activeRow?.isSelected = false
         activeRow = nil
         optionsPopover?.close()
@@ -162,9 +183,38 @@ final class BalloonContent: NSView {
         activeFolderID = nil
     }
 
+    private func folderRowHovered(_ item: FolderItem, row: HoverRow) {
+        guard !HoverRow.isDraggingActive else { return }
+        if activeFolderID == item.id && optionsPopover?.isShown == true {
+            hoverTask?.cancel()
+            hoverTask = nil
+            return
+        }
+
+        hoverTask?.cancel()
+        let task = DispatchWorkItem { [weak self, weak row] in
+            guard let self, let row, !HoverRow.isDraggingActive else { return }
+            self.showFolderOptions(for: item, relativeTo: row, toggleIfActive: false)
+        }
+        hoverTask = task
+        let delay: TimeInterval = optionsPopover?.isShown == true ? 0.08 : 0.12
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: task)
+    }
+
+    private func folderRowClicked(_ item: FolderItem, event: NSEvent) {
+        hoverTask?.cancel()
+        hoverTask = nil
+        closeOptionsPopover()
+        Opening.open(item, with: item.primaryOpener)
+        let keepOpen = event.modifierFlags.contains(.command)
+        onOpen?(keepOpen)
+    }
+
     // MARK: montagem
 
     func rebuild() {
+        hoverTask?.cancel()
+        hoverTask = nil
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         rowMap.removeAll()
         highlighted = nil
@@ -246,9 +296,22 @@ final class BalloonContent: NSView {
             row.isSelected = true
             activeRow = row
         }
-        row.onClick = { [weak self, weak row] _ in
+        row.onMouseDown = { [weak self] in
+            self?.hoverTask?.cancel()
+            self?.hoverTask = nil
+        }
+        row.onDragStart = { [weak self] in
+            self?.hoverTask?.cancel()
+            self?.hoverTask = nil
+            self?.closeOptionsPopover(animated: false)
+        }
+        row.onMouseEnter = { [weak self, weak row] in
             guard let self, let row else { return }
-            self.showFolderOptions(for: item, relativeTo: row)
+            self.folderRowHovered(item, row: row)
+        }
+        row.onClick = { [weak self] event in
+            guard let self else { return }
+            self.folderRowClicked(item, event: event)
         }
         row.menu = itemMenu(item, inGroup: groupID)
         return row
@@ -256,6 +319,15 @@ final class BalloonContent: NSView {
 
     private func groupHeader(_ g: FolderGroup, isOpen: Bool) -> HoverRow {
         let header = GroupHeaderRow(group: g, isOpen: isOpen)
+        header.onMouseEnter = { [weak self] in
+            guard let self else { return }
+            self.hoverTask?.cancel()
+            let task = DispatchWorkItem { [weak self] in
+                self?.closeOptionsPopover()
+            }
+            self.hoverTask = task
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: task)
+        }
         header.onClick = { [weak self] _ in
             guard let self else { return }
             self.closeOptionsPopover()
@@ -345,11 +417,20 @@ final class BalloonContent: NSView {
     // MARK: drag & drop
 
     override func draggingEntered(_ s: NSDraggingInfo) -> NSDragOperation {
-        closeOptionsPopover()
+        HoverRow.isDraggingActive = true
+        hoverTask?.cancel()
+        hoverTask = nil
+        closeOptionsPopover(animated: false)
         return .move
     }
 
     override func draggingUpdated(_ s: NSDraggingInfo) -> NSDragOperation {
+        HoverRow.isDraggingActive = true
+        hoverTask?.cancel()
+        hoverTask = nil
+        if optionsPopover != nil {
+            closeOptionsPopover(animated: false)
+        }
         guard let hit = hitRow(for: s) else {
             clearHighlight(); return .move
         }
@@ -381,7 +462,15 @@ final class BalloonContent: NSView {
         springTimer?.invalidate()
     }
 
+    override func draggingEnded(_ s: NSDraggingInfo) {
+        HoverRow.isDraggingActive = false
+        clearHighlight()
+        springTarget = nil
+        springTimer?.invalidate()
+    }
+
     override func performDragOperation(_ s: NSDraggingInfo) -> Bool {
+        HoverRow.isDraggingActive = false
         defer { clearHighlight(); springTimer?.invalidate(); springTarget = nil }
 
         guard let raw = s.draggingPasteboard.string(forType: .dockFoldersItem),
@@ -459,6 +548,15 @@ final class BalloonContent: NSView {
         row.translatesAutoresizingMaskIntoConstraints = false
         row.heightAnchor.constraint(equalToConstant: 22).isActive = true
         row.toolTip = "A seta só aparece com posicionamento preciso. Requer permissão de Acessibilidade."
+        row.onMouseEnter = { [weak self] in
+            guard let self else { return }
+            self.hoverTask?.cancel()
+            let task = DispatchWorkItem { [weak self] in
+                self?.closeOptionsPopover()
+            }
+            self.hoverTask = task
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: task)
+        }
         row.onClick = { [weak self] _ in self?.onRequestPrecision?() }
 
         let icon = NSImageView()
@@ -487,9 +585,18 @@ final class BalloonContent: NSView {
     }
 
     private func footer() -> NSView {
-        let container = NSView()
+        let container = FooterTrackingView()
         container.translatesAutoresizingMaskIntoConstraints = false
         container.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        container.onMouseEnter = { [weak self] in
+            guard let self else { return }
+            self.hoverTask?.cancel()
+            let task = DispatchWorkItem { [weak self] in
+                self?.closeOptionsPopover()
+            }
+            self.hoverTask = task
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: task)
+        }
 
         let add = NSButton(image: NSImage(systemSymbolName: "plus", accessibilityDescription: "Adicionar")!,
                            target: self, action: #selector(showAddMenu(_:)))
@@ -569,9 +676,32 @@ extension BalloonContent: NSPopoverDelegate {
     }
 
     func popoverDidClose(_ notification: Notification) {
+        guard let closedPop = notification.object as? NSPopover, closedPop === optionsPopover else { return }
+        if let fid = activeFolderID, let updated = store.findItem(fid) {
+            (activeRow as? FolderRow)?.updateIcon(for: updated.primaryOpener)
+        }
         activeRow?.isSelected = false
         activeRow = nil
         optionsPopover = nil
         activeFolderID = nil
+    }
+}
+
+final class FooterTrackingView: NSView {
+    var onMouseEnter: (() -> Void)?
+    private var tracking: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let t = tracking { removeTrackingArea(t) }
+        let t = NSTrackingArea(rect: bounds,
+                               options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                               owner: self)
+        addTrackingArea(t)
+        tracking = t
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        onMouseEnter?()
     }
 }

@@ -287,6 +287,7 @@ final class FolderOptionsView: NSView {
 
     var onOpen: ((_ opener: Opener, _ keepOpen: Bool) -> Void)?
     var onNeedsResize: (() -> Void)?
+    var onChange: (() -> Void)?
     var withModal: (((() -> Void) -> Void))?
 
     private let stack = NSStackView()
@@ -351,6 +352,7 @@ final class FolderOptionsView: NSView {
                 self.store.reorderOpeners(for: self.folderID, fromIndex: fromIdx, toIndex: toIdx)
                 self.rebuild()
                 self.onNeedsResize?()
+                self.onChange?()
             }
             opView.onConfigureFile = { [weak self] in
                 self?.pickTargetFile(for: i)
@@ -368,6 +370,7 @@ final class FolderOptionsView: NSView {
                 self.store.removeOpener(at: i, for: self.folderID)
                 self.rebuild()
                 self.onNeedsResize?()
+                self.onChange?()
             }
             stack.addArrangedSubview(opView)
         }
@@ -410,27 +413,12 @@ final class FolderOptionsView: NSView {
             guard panel.runModal() == .OK, let url = panel.url else { return }
 
             guard let bundleID = Bundle(url: url)?.bundleIdentifier else { return }
-            let appName = FileManager.default.displayName(atPath: url.path)
-                .replacingOccurrences(of: ".app", with: "")
-
-            let alert = NSAlert()
-            alert.messageText = "Vincular “\(appName)”"
-            alert.informativeText = "Deseja abrir a pasta agora com este aplicativo?"
-            alert.addButton(withTitle: "Abrir agora")
-            alert.addButton(withTitle: "Apenas vincular")
-            alert.addButton(withTitle: "Cancelar")
-
-            let response = alert.runModal()
-            if response == .alertThirdButtonReturn { return }
 
             let opener = Opener.app(bundleID)
             self.store.addOpener(opener, to: self.folderID)
             self.rebuild()
             self.onNeedsResize?()
-
-            if response == .alertFirstButtonReturn {
-                self.onOpen?(opener, false)
-            }
+            self.onChange?()
         }
     }
 

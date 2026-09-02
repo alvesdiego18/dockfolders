@@ -34,13 +34,20 @@ final class ActionButton: NSButton {
 }
 
 class HoverRow: NSView {
+    static var isDraggingActive = false
+
     var onClick: ((NSEvent) -> Void)?
+    var onMouseEnter: (() -> Void)?
+    var onMouseExit: (() -> Void)?
+    var onMouseDown: (() -> Void)?
+    var onDragStart: (() -> Void)?
     var isEnabled = true
     /// Início do arrasto; devolve o UUID a ser transportado.
     var dragItemID: UUID?
 
     private var tracking: NSTrackingArea?
     private var mouseDownPoint: NSPoint?
+    private var isDragging = false
     var hovering = false { didSet { needsDisplay = true } }
     var isSelected = false { didSet { needsDisplay = true } }
     var isDropTarget = false { didSet { needsDisplay = true } }
@@ -55,16 +62,31 @@ class HoverRow: NSView {
         tracking = t
     }
 
-    override func mouseEntered(with e: NSEvent) { if isEnabled { hovering = true } }
-    override func mouseExited(with e: NSEvent) { hovering = false }
+    override func mouseEntered(with e: NSEvent) {
+        guard !Self.isDraggingActive else { return }
+        if isEnabled {
+            hovering = true
+            onMouseEnter?()
+        }
+    }
+
+    override func mouseExited(with e: NSEvent) {
+        hovering = false
+        onMouseExit?()
+    }
 
     override func mouseDown(with e: NSEvent) {
+        isDragging = false
         mouseDownPoint = e.locationInWindow
+        onMouseDown?()
         if e.clickCount == 2 { doubleClicked(e) }
     }
 
     override func mouseUp(with e: NSEvent) {
-        guard isEnabled, e.clickCount == 1 else { return }
+        guard isEnabled, !isDragging, !Self.isDraggingActive, e.clickCount == 1 else {
+            isDragging = false
+            return
+        }
         onClick?(e)
     }
 
@@ -72,6 +94,10 @@ class HoverRow: NSView {
         guard let id = dragItemID, let start = mouseDownPoint else { return }
         let dx = e.locationInWindow.x - start.x, dy = e.locationInWindow.y - start.y
         guard dx * dx + dy * dy > 16 else { return }   // limiar de 4pt
+
+        isDragging = true
+        Self.isDraggingActive = true
+        onDragStart?()
 
         let pbItem = NSPasteboardItem()
         pbItem.setString(id.uuidString, forType: .dockFoldersItem)
@@ -116,10 +142,29 @@ extension HoverRow: NSDraggingSource {
                          sourceOperationMaskFor ctx: NSDraggingContext) -> NSDragOperation {
         .move
     }
+
+    func draggingSession(_ s: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
+        Self.isDraggingActive = true
+    }
+
+    func draggingSession(_ s: NSDraggingSession,
+                         endedAt screenPoint: NSPoint,
+                         operation: NSDragOperation) {
+        Self.isDraggingActive = false
+        DispatchQueue.main.async { [weak self] in
+            self?.isDragging = false
+        }
+    }
 }
 
 final class FolderRow: HoverRow {
     static let height: CGFloat = 28
+
+    private let primaryIcon = NSImageView()
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        super.hitTest(point) != nil ? self : nil
+    }
 
     init(item: FolderItem, indent: CGFloat = 0) {
         super.init(frame: .zero)
@@ -130,10 +175,9 @@ final class FolderRow: HoverRow {
         let available = item.isAvailable
         isEnabled = available
 
-        let folderIcon = NSImageView()
-        folderIcon.image = NSWorkspace.shared.icon(for: .folder)
-        folderIcon.imageScaling = .scaleProportionallyDown
-        folderIcon.translatesAutoresizingMaskIntoConstraints = false
+        primaryIcon.image = Opening.icon(for: item.primaryOpener) ?? NSWorkspace.shared.icon(for: .folder)
+        primaryIcon.imageScaling = .scaleProportionallyDown
+        primaryIcon.translatesAutoresizingMaskIntoConstraints = false
 
         // O nome nunca trunca: é ele que dita a largura do balão.
         let name = NSTextField(labelWithString: item.displayName)
@@ -157,14 +201,14 @@ final class FolderRow: HoverRow {
             toolTip = item.path
         }
 
-        addSubview(folderIcon); addSubview(name); addSubview(chevron)
+        addSubview(primaryIcon); addSubview(name); addSubview(chevron)
         NSLayoutConstraint.activate([
-            folderIcon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14 + indent),
-            folderIcon.centerYAnchor.constraint(equalTo: centerYAnchor),
-            folderIcon.widthAnchor.constraint(equalToConstant: 17),
-            folderIcon.heightAnchor.constraint(equalToConstant: 17),
+            primaryIcon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14 + indent),
+            primaryIcon.centerYAnchor.constraint(equalTo: centerYAnchor),
+            primaryIcon.widthAnchor.constraint(equalToConstant: 17),
+            primaryIcon.heightAnchor.constraint(equalToConstant: 17),
 
-            name.leadingAnchor.constraint(equalTo: folderIcon.trailingAnchor, constant: 8),
+            name.leadingAnchor.constraint(equalTo: primaryIcon.trailingAnchor, constant: 8),
             name.centerYAnchor.constraint(equalTo: centerYAnchor),
 
             chevron.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
@@ -173,6 +217,10 @@ final class FolderRow: HoverRow {
 
             name.trailingAnchor.constraint(lessThanOrEqualTo: chevron.leadingAnchor, constant: -12),
         ])
+    }
+
+    func updateIcon(for opener: Opener) {
+        primaryIcon.image = Opening.icon(for: opener) ?? NSWorkspace.shared.icon(for: .folder)
     }
 
     required init?(coder: NSCoder) { fatalError() }

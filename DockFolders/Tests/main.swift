@@ -77,11 +77,13 @@ let groupDireto = store.createGroup(name: "Direto")
 let diretoItem = store.addFolder(path: "/Library", toGroup: groupDireto.id)
 check(store.data.groups.first(where: { $0.id == groupDireto.id })?.folders.contains(where: { $0.id == diretoItem.id }) == true,
       "pasta adicionada diretamente ao grupo")
-store.addOpener(.app("com.apple.Terminal"), to: diretoItem.id)
+check(diretoItem.openers.count == 2, "pasta nasce com finder e terminal")
+check(diretoItem.openers.first == .finder && diretoItem.openers.last?.bundleID == "com.apple.Terminal", "openers padrão são finder e terminal")
+store.addOpener(.app("com.microsoft.VSCode"), to: diretoItem.id)
 let loadedItem = store.findItem(diretoItem.id)!
-check(loadedItem.openers.count == 2, "opener adicionado ao item")
-store.reorderOpeners(for: diretoItem.id, fromIndex: 1, toIndex: 0)
-check(store.findItem(diretoItem.id)!.openers.first?.bundleID == "com.apple.Terminal", "opener reordenado")
+check(loadedItem.openers.count == 3, "opener adicionado ao item")
+store.reorderOpeners(for: diretoItem.id, fromIndex: 2, toIndex: 0)
+check(store.findItem(diretoItem.id)!.openers.first?.bundleID == "com.microsoft.VSCode", "opener reordenado")
 store.removeOpener(at: 0, for: diretoItem.id)
 check(store.findItem(diretoItem.id)!.openers.first == .finder, "opener removido")
 
