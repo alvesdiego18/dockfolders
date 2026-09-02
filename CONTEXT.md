@@ -138,18 +138,21 @@ Com accordion exclusivo, a altura máxima é *(todos os cabeçalhos) + (o maior 
 
 ## Itens
 
-Ícone real do Finder (`NSWorkspace.shared.icon(forFile:)`, respeita ícones customizados) +
-nome da pasta + **até três ícones de abertura** à direita.
+Ícone da **abertura principal** à esquerda (`Opening.icon(for:)`) + nome da pasta + **até
+duas** aberturas restantes como ícones à direita.
 
 **Uma pasta tem várias formas de abrir** (Q33a). Cada abertura é um app e, opcionalmente, um
 alvo específico dentro da pasta — o Xcode precisa do `.xcworkspace`/`.xcodeproj`, enquanto
 Terminal e editores abrem a própria pasta. O alvo é **sempre escolhido à mão** (Q34b): sem
 autodetecção.
 
-- Clicar no **nome** abre com a **principal** (a primeira da lista)
+- Clicar no **nome** abre com a **principal** (a primeira da lista); o ícone à esquerda a
+  representa, então ela não se repete entre os ícones à direita
 - Clicar num **ícone à direita** abre com aquela abertura
 - Ícone sem rótulo, com **tooltip** no hover (app, e o arquivo quando há alvo)
-- Máximo de três aberturas (Q35a)
+- Máximo de três aberturas no total (Q35a): a principal à esquerda + até duas à direita
+- Quando a principal é o **Finder**, o ícone é a pasta genérica do macOS
+  (`NSWorkspace.icon(for: .folder)`), não o rosto do app Finder
 
 **O nome da pasta nunca é truncado**: o balão se ajusta em largura ao nome mais longo, com a
 largura útil da tela como único teto.

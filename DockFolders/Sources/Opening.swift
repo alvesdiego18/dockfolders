@@ -1,6 +1,7 @@
 // Abertura de pastas e resolução de apps.
 
 import AppKit
+import UniformTypeIdentifiers
 
 enum Opening {
 
@@ -29,7 +30,10 @@ enum Opening {
     }
 
     static func icon(for opener: Opener) -> NSImage? {
-        let id = opener.bundleID ?? "com.apple.finder"
+        guard let id = opener.bundleID else {
+            // Finder: o ícone da pasta do macOS, não o rosto do app Finder.
+            return NSWorkspace.shared.icon(for: .folder)
+        }
         guard let u = appURL(for: id) else { return nil }
         return NSWorkspace.shared.icon(forFile: u.path)
     }

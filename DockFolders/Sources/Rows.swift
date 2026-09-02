@@ -116,7 +116,9 @@ extension HoverRow: NSDraggingSource {
 final class FolderRow: HoverRow {
     static let height: CGFloat = 28
 
-    /// Q35: ícone sem rótulo, com tooltip no hover. Máximo de três.
+    /// O ícone à esquerda representa a abertura principal (a que o clique no nome
+    /// dispara); os demais ícones à direita são as outras aberturas, sem rótulo,
+    /// com tooltip no hover. No máximo duas — a principal não se repete à direita.
     init(item: FolderItem, indent: CGFloat = 0, onOpen: @escaping (Opener) -> Void) {
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
@@ -126,10 +128,10 @@ final class FolderRow: HoverRow {
         let available = item.isAvailable
         isEnabled = available
 
-        let icon = NSImageView()
-        icon.image = NSWorkspace.shared.icon(forFile: item.path)
-        icon.imageScaling = .scaleProportionallyDown
-        icon.translatesAutoresizingMaskIntoConstraints = false
+        let primaryIcon = NSImageView()
+        primaryIcon.image = Opening.icon(for: item.primaryOpener)
+        primaryIcon.imageScaling = .scaleProportionallyDown
+        primaryIcon.translatesAutoresizingMaskIntoConstraints = false
 
         // O nome nunca trunca: é ele que dita a largura do balão.
         let name = NSTextField(labelWithString: item.displayName)
@@ -143,7 +145,7 @@ final class FolderRow: HoverRow {
         openers.orientation = .horizontal
         openers.spacing = 10
         openers.translatesAutoresizingMaskIntoConstraints = false
-        for opener in item.openers.prefix(FolderItem.maxOpeners) {
+        for opener in item.openers.dropFirst() {
             let b = ActionButton(image: Opening.icon(for: opener),
                                  tooltip: Opening.tooltip(for: opener)) { onOpen(opener) }
             b.isEnabled = available
@@ -161,14 +163,14 @@ final class FolderRow: HoverRow {
             toolTip = item.path
         }
 
-        addSubview(icon); addSubview(name); addSubview(openers)
+        addSubview(primaryIcon); addSubview(name); addSubview(openers)
         NSLayoutConstraint.activate([
-            icon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14 + indent),
-            icon.centerYAnchor.constraint(equalTo: centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 17),
-            icon.heightAnchor.constraint(equalToConstant: 17),
+            primaryIcon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14 + indent),
+            primaryIcon.centerYAnchor.constraint(equalTo: centerYAnchor),
+            primaryIcon.widthAnchor.constraint(equalToConstant: 17),
+            primaryIcon.heightAnchor.constraint(equalToConstant: 17),
 
-            name.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 8),
+            name.leadingAnchor.constraint(equalTo: primaryIcon.trailingAnchor, constant: 8),
             name.centerYAnchor.constraint(equalTo: centerYAnchor),
 
             // Texto sempre à esquerda, ícones sempre à direita: os dois são pinados às
