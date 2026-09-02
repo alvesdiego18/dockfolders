@@ -138,6 +138,9 @@ final class BalloonContent: NSView {
 
         optionsPopover = pop
         pop.show(relativeTo: row.bounds, of: row, preferredEdge: .maxX)
+        if let popWin = optionsView.window {
+            popWin.sharingType = window?.sharingType ?? .none
+        }
     }
 
     func showFolderOptions(for itemID: UUID) {
@@ -558,6 +561,13 @@ final class BalloonContent: NSView {
 }
 
 extension BalloonContent: NSPopoverDelegate {
+    func popoverWillShow(_ notification: Notification) {
+        if let pop = notification.object as? NSPopover,
+           let popWin = pop.contentViewController?.view.window {
+            popWin.sharingType = window?.sharingType ?? .none
+        }
+    }
+
     func popoverDidClose(_ notification: Notification) {
         activeRow?.isSelected = false
         activeRow = nil

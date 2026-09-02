@@ -99,11 +99,13 @@ Reforçando a leitura: `NSWindowSharingType.readWrite` foi depreciado no macOS 1
 isso como propriedade de **criação** da janela, não como chave a ser girada depois.
 
 Consequência de projeto: o app nunca alterna esse valor em runtime. `.none` é fixado na
-construção da `NSPanel`, e a liberação para desenvolvimento é `#if DEBUG` (tempo de
-compilação), nunca um toggle.
+construção da `NSPanel` e também aplicado à janela do balão de opções/aplicativos (`NSPopover`),
+garantindo que tanto a lista de pastas quanto os atalhos de aplicativos vinculados fiquem invisíveis
+a gravações e compartilhamentos de tela. A liberação para desenvolvimento visual é via flag de
+ambiente `ENABLE_SCREEN_CAPTURE=1` sob `#if DEBUG`.
 
 O ícone no Dock **permanece visível** em transmissões — é desenhado pelo processo Dock e
-nenhuma API do app alcança isso. O que é sensível (nomes dos projetos) está protegido.
+nenhuma API do app alcança isso. O que é sensível (nomes dos projetos e ferramentas) está protegido.
 
 ## Estrutura
 

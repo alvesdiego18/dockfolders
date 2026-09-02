@@ -303,6 +303,23 @@ final class FolderOptionsView: NSView {
 
     required init?(coder: NSCoder) { fatalError() }
 
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let window {
+            let targetSharing: NSWindow.SharingType
+            if let parentSharing = window.parent?.sharingType {
+                targetSharing = parentSharing
+            } else {
+                #if DEBUG
+                targetSharing = (ProcessInfo.processInfo.environment["ENABLE_SCREEN_CAPTURE"] == "1") ? .readOnly : .none
+                #else
+                targetSharing = .none
+                #endif
+            }
+            window.sharingType = targetSharing
+        }
+    }
+
     private func setupViews() {
         stack.orientation = .horizontal
         stack.alignment = .centerY

@@ -37,7 +37,7 @@ final class BalloonPanel: NSPanel {
                    backing: .buffered, defer: false)
 
         #if DEBUG
-        sharingType = .readOnly
+        sharingType = (ProcessInfo.processInfo.environment["ENABLE_SCREEN_CAPTURE"] == "1") ? .readOnly : .none
         #else
         sharingType = .none
         #endif
