@@ -141,7 +141,7 @@ final class FolderRow: HoverRow {
 
         let openers = NSStackView()
         openers.orientation = .horizontal
-        openers.spacing = 5
+        openers.spacing = 10
         openers.translatesAutoresizingMaskIntoConstraints = false
         for opener in item.openers.prefix(FolderItem.maxOpeners) {
             let b = ActionButton(image: Opening.icon(for: opener),
@@ -171,11 +171,15 @@ final class FolderRow: HoverRow {
             name.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 8),
             name.centerYAnchor.constraint(equalTo: centerYAnchor),
 
-            // Igualdade, não `lessThanOrEqualTo`: fecha a cadeia de larguras para que
-            // `fittingSize` reflita o nome completo e o balão possa se ajustar a ele.
-            openers.leadingAnchor.constraint(equalTo: name.trailingAnchor, constant: 12),
+            // Texto sempre à esquerda, ícones sempre à direita: os dois são pinados às
+            // bordas de forma independente, não encadeados. Uma igualdade aqui faria os
+            // ícones colarem no fim do texto em vez de ficarem fixos na borda da linha
+            // (visível quando o nome é bem mais curto que o mais longo do balão).
+            // A folga vira o `<=` de segurança abaixo; ela não afeta `fittingSize`,
+            // que resolve para a distância mínima entre texto e ícones.
             openers.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
             openers.centerYAnchor.constraint(equalTo: centerYAnchor),
+            name.trailingAnchor.constraint(lessThanOrEqualTo: openers.leadingAnchor, constant: -12),
         ])
     }
 

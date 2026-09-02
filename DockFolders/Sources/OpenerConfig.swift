@@ -13,6 +13,7 @@ final class OpenerConfigWindow: NSObject {
     private let window: NSWindow
     private let list = NSStackView()
     private let addButton: NSButton
+    private let terminalButton: NSButton
     private var confirmed = false
 
     static func run(for item: FolderItem) -> [Opener]? {
@@ -26,6 +27,7 @@ final class OpenerConfigWindow: NSObject {
         self.window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 240),
                                styleMask: [.titled], backing: .buffered, defer: false)
         self.addButton = NSButton(title: "Adicionar abertura…", target: nil, action: nil)
+        self.terminalButton = NSButton(title: "Terminal", target: nil, action: nil)
         super.init()
 
         window.title = "Aberturas de “\(item.displayName)”"
@@ -41,6 +43,15 @@ final class OpenerConfigWindow: NSObject {
         addButton.bezelStyle = .rounded
         addButton.translatesAutoresizingMaskIntoConstraints = false
 
+        // Atalho: o Terminal sempre abre a pasta, então pula os dois diálogos
+        // (escolher o app em /Applications, escolher pasta-ou-arquivo).
+        terminalButton.target = self
+        terminalButton.action = #selector(addTerminal)
+        terminalButton.bezelStyle = .rounded
+        terminalButton.image = NSImage(systemSymbolName: "terminal", accessibilityDescription: nil)
+        terminalButton.imagePosition = .imageLeading
+        terminalButton.translatesAutoresizingMaskIntoConstraints = false
+
         let done = NSButton(title: "Concluído", target: self, action: #selector(finish))
         done.bezelStyle = .rounded
         done.keyEquivalent = "\r"
@@ -54,7 +65,7 @@ final class OpenerConfigWindow: NSObject {
         hint.translatesAutoresizingMaskIntoConstraints = false
 
         let content = window.contentView!
-        [list, addButton, done, hint].forEach { content.addSubview($0) }
+        [list, addButton, terminalButton, done, hint].forEach { content.addSubview($0) }
         NSLayoutConstraint.activate([
             list.topAnchor.constraint(equalTo: content.topAnchor, constant: 16),
             list.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 16),
@@ -62,6 +73,9 @@ final class OpenerConfigWindow: NSObject {
 
             addButton.topAnchor.constraint(equalTo: list.bottomAnchor, constant: 12),
             addButton.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 16),
+
+            terminalButton.topAnchor.constraint(equalTo: list.bottomAnchor, constant: 12),
+            terminalButton.leadingAnchor.constraint(equalTo: addButton.trailingAnchor, constant: 8),
 
             hint.topAnchor.constraint(equalTo: addButton.bottomAnchor, constant: 14),
             hint.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 16),
@@ -97,8 +111,16 @@ final class OpenerConfigWindow: NSObject {
         for (i, opener) in openers.enumerated() {
             list.addArrangedSubview(row(for: opener, at: i))
         }
+        let hasTerminal = openers.contains { $0.bundleID == "com.apple.Terminal" }
         addButton.isEnabled = openers.count < FolderItem.maxOpeners
+        terminalButton.isEnabled = openers.count < FolderItem.maxOpeners && !hasTerminal
         window.setContentSize(NSSize(width: 420, height: 150 + CGFloat(max(openers.count, 1)) * 34))
+    }
+
+    @objc private func addTerminal() {
+        guard Opening.appURL(for: "com.apple.Terminal") != nil else { return }
+        openers.append(.app("com.apple.Terminal"))   // sempre abre a pasta, sem alvo
+        rebuild()
     }
 
     private func row(for opener: Opener, at index: Int) -> NSView {
