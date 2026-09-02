@@ -26,15 +26,20 @@ final class BalloonContent: NSView {
     private var springTimer: Timer?
     private var highlighted: HoverRow?
 
+    private var optionsPopover: NSPopover?
+    private var activeFolderID: UUID?
+    private weak var activeRow: HoverRow?
     var onOpen: ((_ keepOpen: Bool) -> Void)?
     /// `concurrent`, quando presente, roda dentro da animação de redimensionamento do
     /// balão — usado pelo accordion para dissolver a foto do conteúdo anterior.
     var onNeedsResize: ((_ concurrent: (() -> Void)?) -> Void)?
     var onAddFolder: (() -> Void)?
+    var onAddFolderToGroup: ((UUID) -> Void)?
     var onCreateGroup: (() -> Void)?
     var onToggleLoginItem: (() -> Void)?
     var onRequestPrecision: (() -> Void)?
     var onChangeOpener: ((FolderItem) -> Void)?
+    var withModal: (((() -> Void) -> Void))?
     var isApproximate = false
 
     init(store: Store) {
@@ -64,13 +69,12 @@ final class BalloonContent: NSView {
 
     func setBottomInset(_ inset: CGFloat) { bottomInsetConstraint.constant = -inset }
 
-    var measuredHeight: CGFloat { stack.fittingSize.height - bottomInsetConstraint.constant }
+    var measuredHeight: CGFloat {
+        stack.layoutSubtreeIfNeeded()
+        return stack.fittingSize.height - bottomInsetConstraint.constant
+    }
 
-    /// Largura fixa do balão: a maior linha possível — toda pasta (avulsa ou dentro de
-    /// qualquer grupo, aberto ou não) e todo cabeçalho de grupo, medidas com o layout
-    /// real das linhas. Fixa porque não depende de qual grupo está aberto: abrir ou
-    /// fechar o accordion nunca muda a largura, e nenhum texto trunca. O teto é físico
-    /// — a largura útil da tela —, não um limite de design.
+    /// Largura do balão: calculada a partir dos itens visíveis na lista.
     func measuredWidth(maxWidth: CGFloat) -> CGFloat {
         var widest: CGFloat = BalloonPanel.minWidth
         func consider(_ view: NSView) {
@@ -78,12 +82,81 @@ final class BalloonContent: NSView {
             widest = max(widest, ceil(view.fittingSize.width))
         }
         let d = store.data
-        for item in d.loose { consider(FolderRow(item: item, indent: 0) { _ in }) }
+        for item in d.loose { consider(FolderRow(item: item, indent: 0)) }
         for g in d.groups {
             consider(GroupHeaderRow(group: g, isOpen: false))
-            for item in g.folders { consider(FolderRow(item: item, indent: 16) { _ in }) }
+            for item in g.folders { consider(FolderRow(item: item, indent: 16)) }
         }
         return min(widest, maxWidth)
+    }
+
+    // MARK: balão de opções de pasta
+
+    func handleEscape() -> Bool {
+        if optionsPopover?.isShown == true {
+            closeOptionsPopover()
+            return true
+        }
+        return false
+    }
+
+    func showFolderOptions(for item: FolderItem, relativeTo row: HoverRow) {
+        if optionsPopover?.isShown == true && activeFolderID == item.id {
+            closeOptionsPopover()
+            return
+        }
+        closeOptionsPopover()
+
+        let pop = NSPopover()
+        pop.behavior = .transient
+        pop.animates = true
+        pop.delegate = self
+        if let app = window?.appearance { pop.appearance = app }
+
+        let optionsView = FolderOptionsView(folderID: item.id, store: store)
+        optionsView.onOpen = { [weak self, weak pop] opener, keepOpen in
+            Opening.open(item, with: opener)
+            if !keepOpen {
+                pop?.close()
+                self?.closeOptionsPopover()
+            }
+            self?.onOpen?(keepOpen)
+        }
+        optionsView.onNeedsResize = { [weak pop, weak optionsView] in
+            guard let pop, let optionsView else { return }
+            pop.contentSize = optionsView.fittingSize
+        }
+        optionsView.withModal = self.withModal
+
+        let vc = NSViewController()
+        vc.view = optionsView
+        pop.contentViewController = vc
+
+        activeRow = row
+        activeFolderID = item.id
+        row.isSelected = true
+
+        optionsPopover = pop
+        pop.show(relativeTo: row.bounds, of: row, preferredEdge: .maxX)
+    }
+
+    func showFolderOptions(for itemID: UUID) {
+        rebuild()
+        onNeedsResize?(nil)
+        DispatchQueue.main.async { [weak self] in
+            guard let self,
+                  let item = self.store.findItem(itemID),
+                  let row = self.rowMap.compactMap({ $0.view as? FolderRow }).first(where: { $0.dragItemID == itemID }) else { return }
+            self.showFolderOptions(for: item, relativeTo: row)
+        }
+    }
+
+    func closeOptionsPopover() {
+        activeRow?.isSelected = false
+        activeRow = nil
+        optionsPopover?.close()
+        optionsPopover = nil
+        activeFolderID = nil
     }
 
     // MARK: montagem
@@ -165,14 +238,14 @@ final class BalloonContent: NSView {
     // MARK: linhas
 
     private func folderRow(_ item: FolderItem, inGroup groupID: UUID?) -> HoverRow {
-        // Ícone à direita abre com aquele abridor; o nome abre com o principal (Q33a).
-        let row = FolderRow(item: item, indent: groupID == nil ? 0 : 16) { [weak self] opener in
-            Opening.open(item, with: opener)
-            self?.onOpen?(NSEvent.modifierFlags.contains(.command))
+        let row = FolderRow(item: item, indent: groupID == nil ? 0 : 16)
+        if activeFolderID == item.id {
+            row.isSelected = true
+            activeRow = row
         }
-        row.onClick = { [weak self] event in
-            Opening.open(item, with: item.primaryOpener)
-            self?.onOpen?(event.modifierFlags.contains(.command))
+        row.onClick = { [weak self, weak row] _ in
+            guard let self, let row else { return }
+            self.showFolderOptions(for: item, relativeTo: row)
         }
         row.menu = itemMenu(item, inGroup: groupID)
         return row
@@ -182,13 +255,16 @@ final class BalloonContent: NSView {
         let header = GroupHeaderRow(group: g, isOpen: isOpen)
         header.onClick = { [weak self] _ in
             guard let self else { return }
+            self.closeOptionsPopover()
             let fade = self.snapshotForCrossfade()   // foto do estado atual
             self.store.setOpenGroup(g.id)            // accordion exclusivo
             self.onNeedsResize?(fade)                // rebuild + resize animam sob a foto
         }
         header.onOpenAll = { [weak self] in
-            Opening.openAll(g.folders.filter(\.isAvailable).map { ($0, $0.primaryOpener) })
-            self?.onOpen?(false)
+            guard let self else { return }
+            let folders = self.store.data.groups.first(where: { $0.id == g.id })?.folders ?? g.folders
+            Opening.openAll(folders.filter(\.isAvailable).map { ($0, $0.primaryOpener) })
+            self.onOpen?(false)
         }
         header.onRename = { [weak self] novo in
             self?.store.renameGroup(g.id, to: novo)
@@ -207,7 +283,9 @@ final class BalloonContent: NSView {
             mi.representedObject = block
             m.addItem(mi)
         }
-        add("Configurar aberturas…") { [weak self] in self?.onChangeOpener?(item) }
+        add("Abrir no Finder") {
+            Opening.open(item, with: .finder)
+        }
         if groupID != nil {
             add("Remover do grupo") { [weak self] in
                 guard let self else { return }
@@ -216,7 +294,7 @@ final class BalloonContent: NSView {
             }
         }
         m.addItem(.separator())
-        add("Remover") { [weak self] in
+        add("Remover pasta") { [weak self] in
             guard let self else { return }
             self.store.remove(itemID: item.id)
             self.rebuild(); self.onNeedsResize?(nil)
@@ -232,6 +310,9 @@ final class BalloonContent: NSView {
             mi.representedObject = block
             m.addItem(mi)
         }
+        add("Adicionar pasta a este grupo…") { [weak self] in
+            self?.onAddFolderToGroup?(g.id)
+        }
         add("Renomear") { [weak self] in
             guard let self else { return }
             let header = self.rowMap.compactMap { $0.view as? GroupHeaderRow }
@@ -239,8 +320,10 @@ final class BalloonContent: NSView {
             header?.beginRename()
         }
         add("Abrir tudo") { [weak self] in
-            Opening.openAll(g.folders.filter(\.isAvailable).map { ($0, $0.primaryOpener) })
-            self?.onOpen?(false)
+            guard let self else { return }
+            let folders = self.store.data.groups.first(where: { $0.id == g.id })?.folders ?? g.folders
+            Opening.openAll(folders.filter(\.isAvailable).map { ($0, $0.primaryOpener) })
+            self.onOpen?(false)
         }
         m.addItem(.separator())
         // Q27: excluir promove as pastas a avulsas; nada é destruído.
@@ -258,7 +341,10 @@ final class BalloonContent: NSView {
 
     // MARK: drag & drop
 
-    override func draggingEntered(_ s: NSDraggingInfo) -> NSDragOperation { .move }
+    override func draggingEntered(_ s: NSDraggingInfo) -> NSDragOperation {
+        closeOptionsPopover()
+        return .move
+    }
 
     override func draggingUpdated(_ s: NSDraggingInfo) -> NSDragOperation {
         guard let hit = hitRow(for: s) else {
@@ -431,9 +517,28 @@ final class BalloonContent: NSView {
         let menu = NSMenu()
         menu.addItem(withTitle: "Adicionar pasta…", action: #selector(addFolder), keyEquivalent: "")
             .target = self
+
+        if !store.data.groups.isEmpty {
+            let groupSubmenu = NSMenu()
+            for g in store.data.groups {
+                let item = NSMenuItem(title: g.name, action: #selector(addGroupFolderAction(_:)), keyEquivalent: "")
+                item.target = self
+                item.representedObject = g.id
+                groupSubmenu.addItem(item)
+            }
+            let groupItem = NSMenuItem(title: "Adicionar pasta ao grupo", action: nil, keyEquivalent: "")
+            groupItem.submenu = groupSubmenu
+            menu.addItem(groupItem)
+        }
+
         menu.addItem(withTitle: "Criar grupo…", action: #selector(createGroup), keyEquivalent: "")
             .target = self
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height + 4), in: sender)
+    }
+
+    @objc private func addGroupFolderAction(_ sender: NSMenuItem) {
+        guard let gid = sender.representedObject as? UUID else { return }
+        onAddFolderToGroup?(gid)
     }
 
     @objc private func showGearMenu(_ sender: NSButton) {
@@ -449,5 +554,14 @@ final class BalloonContent: NSView {
         menu.addItem(.separator())
         menu.addItem(withTitle: "Sair", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height + 4), in: sender)
+    }
+}
+
+extension BalloonContent: NSPopoverDelegate {
+    func popoverDidClose(_ notification: Notification) {
+        activeRow?.isSelected = false
+        activeRow = nil
+        optionsPopover = nil
+        activeFolderID = nil
     }
 }

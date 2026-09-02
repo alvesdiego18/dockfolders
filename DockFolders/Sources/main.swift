@@ -30,16 +30,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         content = BalloonContent(store: store)
         panel = BalloonPanel(content: content)
         panel.onDismiss = { [weak self] in self?.hide() }
+        panel.onEscape = { [weak self] in self?.content.handleEscape() ?? false }
 
         content.onOpen = { [weak self] keepOpen in if !keepOpen { self?.hide() } }
         content.onNeedsResize = { [weak self] concurrent in
             self?.present(animated: true, concurrent: concurrent)
         }
         content.onAddFolder = { [weak self] in self?.addFolder() }
+        content.onAddFolderToGroup = { [weak self] groupID in self?.addFolder(toGroup: groupID) }
         content.onCreateGroup = { [weak self] in self?.createGroup() }
         content.onToggleLoginItem = { LoginItem.toggle() }
         content.onRequestPrecision = { [weak self] in self?.requestAccessibility() }
-        content.onChangeOpener = { [weak self] item in self?.changeOpener(item) }
+        content.withModal = { [weak self] body in self?.withModal(body) ?? () }
 
         // O tile do Dock só existe depois que o app aparece nele.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
@@ -95,32 +97,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func hide() {
         guard !isPresentingModal else { return }
+        content.closeOptionsPopover()
         panel.orderOut(nil)
     }
 
     // MARK: ações
 
-    private func addFolder() {
+    private func addFolder(toGroup groupID: UUID? = nil) {
         withModal {
             let open = NSOpenPanel()
             open.canChooseDirectories = true
             open.canChooseFiles = false          // escopo é só pastas
             open.allowsMultipleSelection = false
             open.prompt = "Adicionar"
+            open.message = groupID != nil ? "Escolha uma pasta para adicionar ao grupo" : "Escolha uma pasta para adicionar"
             guard open.runModal() == .OK, let url = open.url else { return }
 
-            // Nasce com o Finder; as aberturas de verdade são configuradas em seguida.
-            let item = store.addLoose(path: url.path)
-            if let openers = OpenerConfigWindow.run(for: item) {
-                store.setOpeners(openers, for: item.id)
+            // Nasce com o Finder (padrão Mac) e navega imediatamente para seus detalhes
+            let item = store.addFolder(path: url.path, toGroup: groupID)
+            DispatchQueue.main.async { [weak self] in
+                self?.content.showFolderOptions(for: item.id)
             }
-        }
-    }
-
-    private func changeOpener(_ item: FolderItem) {
-        withModal {
-            guard let openers = OpenerConfigWindow.run(for: item) else { return }
-            store.setOpeners(openers, for: item.id)
         }
     }
 

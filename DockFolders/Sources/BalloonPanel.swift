@@ -28,6 +28,8 @@ final class BalloonPanel: NSPanel {
 
     /// Fecha ao perder foco / ESC (Q7b).
     var onDismiss: (() -> Void)?
+    /// Chamado ao pressionar ESC; se devolver true, o painel não se fecha (ex.: voltou da tela de detalhes).
+    var onEscape: (() -> Bool)?
 
     init(content: NSView) {
         super.init(contentRect: NSRect(x: 0, y: 0, width: Self.minWidth, height: 100),
@@ -81,6 +83,7 @@ final class BalloonPanel: NSPanel {
     }
 
     override func cancelOperation(_ sender: Any?) {  // ESC
+        if onEscape?() == true { return }
         onDismiss?()
     }
 

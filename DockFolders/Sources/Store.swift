@@ -46,9 +46,6 @@ private enum LegacyOpener: Codable {
 }
 
 struct FolderItem: Codable, Identifiable, Equatable {
-    /// Q35a: no máximo três ícones à direita.
-    static let maxOpeners = 3
-
     var id: UUID = UUID()
     var path: String
     var openers: [Opener] = [.finder]
@@ -204,11 +201,64 @@ final class Store {
         save()
     }
 
-    func setOpeners(_ openers: [Opener], for itemID: UUID) {
-        let trimmed = Array(openers.prefix(FolderItem.maxOpeners))
-        mutateItem(itemID) { $0.openers = trimmed.isEmpty ? [.finder] : trimmed }
-        trimmed.forEach(recordUsage)
+    @discardableResult
+    func addFolder(path: String, toGroup groupID: UUID? = nil, openers: [Opener] = [.finder]) -> FolderItem {
+        let item = FolderItem(path: path, openers: openers)
+        if let groupID, let i = data.groups.firstIndex(where: { $0.id == groupID }) {
+            data.groups[i].folders.append(item)
+        } else {
+            data.loose.append(item)
+        }
+        openers.forEach(recordUsage)
         save()
+        return item
+    }
+
+    func setOpeners(_ openers: [Opener], for itemID: UUID) {
+        mutateItem(itemID) { $0.openers = openers.isEmpty ? [.finder] : openers }
+        openers.forEach(recordUsage)
+        save()
+    }
+
+    func addOpener(_ opener: Opener, to itemID: UUID) {
+        mutateItem(itemID) { $0.openers.append(opener) }
+        recordUsage(opener)
+        save()
+    }
+
+    func removeOpener(at index: Int, for itemID: UUID) {
+        mutateItem(itemID) {
+            guard index >= 0 && index < $0.openers.count else { return }
+            $0.openers.remove(at: index)
+            if $0.openers.isEmpty { $0.openers = [.finder] }
+        }
+        save()
+    }
+
+    func reorderOpeners(for itemID: UUID, fromIndex: Int, toIndex: Int) {
+        mutateItem(itemID) {
+            guard fromIndex >= 0 && fromIndex < $0.openers.count else { return }
+            let opener = $0.openers.remove(at: fromIndex)
+            let target = min(max(toIndex, 0), $0.openers.count)
+            $0.openers.insert(opener, at: target)
+        }
+        save()
+    }
+
+    func updateOpener(at index: Int, for itemID: UUID, body: (inout Opener) -> Void) {
+        mutateItem(itemID) {
+            guard index >= 0 && index < $0.openers.count else { return }
+            body(&$0.openers[index])
+        }
+        save()
+    }
+
+    func findItem(_ itemID: UUID) -> FolderItem? {
+        if let item = data.loose.first(where: { $0.id == itemID }) { return item }
+        for g in data.groups {
+            if let item = g.folders.first(where: { $0.id == itemID }) { return item }
+        }
+        return nil
     }
 
     /// Accordion exclusivo: abrir um fecha os demais (Q24a).

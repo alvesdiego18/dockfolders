@@ -70,7 +70,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 # shellcheck disable=SC2086
-swiftc -O $DEBUG_FLAG Sources/*.swift -o "$APP/Contents/MacOS/DockFolders"
+swiftc -O $DEBUG_FLAG ${SWIFT_FLAGS:-} Sources/*.swift -o "$APP/Contents/MacOS/DockFolders"
 codesign --force --sign - "$APP" 2>/dev/null || true
 echo "OK: $(pwd)/$APP  (debug=${DEBUG:-0})"
 

@@ -70,7 +70,20 @@ check(multi.openers.count == 3, "três aberturas guardadas")
 check(multi.primaryOpener.bundleID == "com.apple.dt.Xcode", "a primeira é a principal")
 check(multi.openers[0].targetPath == "/tmp/p.xcworkspace", "alvo específico preservado")
 store.setOpeners([.finder, .finder, .finder, .finder], for: b.id)
-check(store.data.loose.first { $0.id == b.id }!.openers.count == 3, "teto de três respeitado")
+check(store.data.loose.first { $0.id == b.id }!.openers.count == 4, "aberturas ilimitadas guardadas")
+
+print("\n— adição direta a grupo e manipulação de openers")
+let groupDireto = store.createGroup(name: "Direto")
+let diretoItem = store.addFolder(path: "/Library", toGroup: groupDireto.id)
+check(store.data.groups.first(where: { $0.id == groupDireto.id })?.folders.contains(where: { $0.id == diretoItem.id }) == true,
+      "pasta adicionada diretamente ao grupo")
+store.addOpener(.app("com.apple.Terminal"), to: diretoItem.id)
+let loadedItem = store.findItem(diretoItem.id)!
+check(loadedItem.openers.count == 2, "opener adicionado ao item")
+store.reorderOpeners(for: diretoItem.id, fromIndex: 1, toIndex: 0)
+check(store.findItem(diretoItem.id)!.openers.first?.bundleID == "com.apple.Terminal", "opener reordenado")
+store.removeOpener(at: 0, for: diretoItem.id)
+check(store.findItem(diretoItem.id)!.openers.first == .finder, "opener removido")
 
 print("\n— comando de Terminal por abertura")
 store.setOpeners([.app("com.apple.Terminal", command: "claude"),

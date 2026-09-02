@@ -42,6 +42,7 @@ class HoverRow: NSView {
     private var tracking: NSTrackingArea?
     private var mouseDownPoint: NSPoint?
     var hovering = false { didSet { needsDisplay = true } }
+    var isSelected = false { didSet { needsDisplay = true } }
     var isDropTarget = false { didSet { needsDisplay = true } }
 
     override func updateTrackingAreas() {
@@ -103,7 +104,7 @@ class HoverRow: NSView {
             let p = NSBezierPath(roundedRect: bounds.insetBy(dx: 6, dy: 1), xRadius: 5, yRadius: 5)
             p.lineWidth = 1.5
             p.stroke()
-        } else if hovering {
+        } else if isSelected || hovering {
             NSColor.selectedContentBackgroundColor.withAlphaComponent(0.85).setFill()
             NSBezierPath(roundedRect: bounds.insetBy(dx: 6, dy: 1), xRadius: 5, yRadius: 5).fill()
         }
@@ -120,10 +121,7 @@ extension HoverRow: NSDraggingSource {
 final class FolderRow: HoverRow {
     static let height: CGFloat = 28
 
-    /// O ícone à esquerda representa a abertura principal (a que o clique no nome
-    /// dispara); os demais ícones à direita são as outras aberturas, sem rótulo,
-    /// com tooltip no hover. No máximo duas — a principal não se repete à direita.
-    init(item: FolderItem, indent: CGFloat = 0, onOpen: @escaping (Opener) -> Void) {
+    init(item: FolderItem, indent: CGFloat = 0) {
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
         heightAnchor.constraint(equalToConstant: Self.height).isActive = true
@@ -132,10 +130,10 @@ final class FolderRow: HoverRow {
         let available = item.isAvailable
         isEnabled = available
 
-        let primaryIcon = NSImageView()
-        primaryIcon.image = Opening.icon(for: item.primaryOpener)
-        primaryIcon.imageScaling = .scaleProportionallyDown
-        primaryIcon.translatesAutoresizingMaskIntoConstraints = false
+        let folderIcon = NSImageView()
+        folderIcon.image = NSWorkspace.shared.icon(for: .folder)
+        folderIcon.imageScaling = .scaleProportionallyDown
+        folderIcon.translatesAutoresizingMaskIntoConstraints = false
 
         // O nome nunca trunca: é ele que dita a largura do balão.
         let name = NSTextField(labelWithString: item.displayName)
@@ -145,18 +143,10 @@ final class FolderRow: HoverRow {
         name.setContentHuggingPriority(.required, for: .horizontal)
         name.translatesAutoresizingMaskIntoConstraints = false
 
-        let openers = NSStackView()
-        openers.orientation = .horizontal
-        openers.spacing = 10
-        openers.translatesAutoresizingMaskIntoConstraints = false
-        for opener in item.openers.dropFirst() {
-            let b = ActionButton(image: Opening.icon(for: opener),
-                                 tooltip: Opening.tooltip(for: opener)) { onOpen(opener) }
-            b.isEnabled = available
-            b.widthAnchor.constraint(equalToConstant: 15).isActive = true
-            b.heightAnchor.constraint(equalToConstant: 15).isActive = true
-            openers.addArrangedSubview(b)
-        }
+        let chevron = NSImageView()
+        chevron.image = NSImage(systemSymbolName: "chevron.forward", accessibilityDescription: nil)
+        chevron.contentTintColor = .tertiaryLabelColor
+        chevron.translatesAutoresizingMaskIntoConstraints = false
 
         // Q10: path que não resolve fica esmaecido e não clicável.
         if !available {
@@ -167,25 +157,21 @@ final class FolderRow: HoverRow {
             toolTip = item.path
         }
 
-        addSubview(primaryIcon); addSubview(name); addSubview(openers)
+        addSubview(folderIcon); addSubview(name); addSubview(chevron)
         NSLayoutConstraint.activate([
-            primaryIcon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14 + indent),
-            primaryIcon.centerYAnchor.constraint(equalTo: centerYAnchor),
-            primaryIcon.widthAnchor.constraint(equalToConstant: 17),
-            primaryIcon.heightAnchor.constraint(equalToConstant: 17),
+            folderIcon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14 + indent),
+            folderIcon.centerYAnchor.constraint(equalTo: centerYAnchor),
+            folderIcon.widthAnchor.constraint(equalToConstant: 17),
+            folderIcon.heightAnchor.constraint(equalToConstant: 17),
 
-            name.leadingAnchor.constraint(equalTo: primaryIcon.trailingAnchor, constant: 8),
+            name.leadingAnchor.constraint(equalTo: folderIcon.trailingAnchor, constant: 8),
             name.centerYAnchor.constraint(equalTo: centerYAnchor),
 
-            // Texto sempre à esquerda, ícones sempre à direita: os dois são pinados às
-            // bordas de forma independente, não encadeados. Uma igualdade aqui faria os
-            // ícones colarem no fim do texto em vez de ficarem fixos na borda da linha
-            // (visível quando o nome é bem mais curto que o mais longo do balão).
-            // A folga vira o `<=` de segurança abaixo; ela não afeta `fittingSize`,
-            // que resolve para a distância mínima entre texto e ícones.
-            openers.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
-            openers.centerYAnchor.constraint(equalTo: centerYAnchor),
-            name.trailingAnchor.constraint(lessThanOrEqualTo: openers.leadingAnchor, constant: -18),
+            chevron.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
+            chevron.centerYAnchor.constraint(equalTo: centerYAnchor),
+            chevron.widthAnchor.constraint(equalToConstant: 9),
+
+            name.trailingAnchor.constraint(lessThanOrEqualTo: chevron.leadingAnchor, constant: -12),
         ])
     }
 
