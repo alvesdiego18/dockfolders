@@ -81,7 +81,8 @@ do Terminal pode executar um comando assim que entra na pasta (por exemplo,
 
 ### Pelo instalador (`.dmg`)
 
-1. Baixe o `DockFolders-<versão>.dmg` na página de
+1. [Baixe o `DockFolders.dmg`](https://github.com/alvesdiego18/dockfolders/releases/latest/download/DockFolders.dmg)
+   (sempre a versão mais recente). Versões anteriores ficam na página de
    [Releases](https://github.com/alvesdiego18/dockfolders/releases).
 2. Abra o `.dmg` e arraste o `DockFolders.app` para a pasta **Applications**.
 3. Na primeira abertura, libere o app no Gatekeeper (veja abaixo).

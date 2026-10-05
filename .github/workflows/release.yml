@@ -27,9 +27,14 @@ jobs:
       - name: Build (.app + .dmg)
         run: ./DockFolders/build.sh
 
+      - name: Criar link estável de download
+        run: cp DockFolders/dist/DockFolders-${VERSION}.dmg DockFolders/dist/DockFolders.dmg
+
       - name: Publicar Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
-          files: DockFolders/dist/DockFolders-*.dmg
+          files: |
+            DockFolders/dist/DockFolders-${{ env.VERSION }}.dmg
+            DockFolders/dist/DockFolders.dmg
           generate_release_notes: true
