@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (.app + .dmg)
+        run: VERSION="${GITHUB_REF_NAME#v}" ./DockFolders/build.sh
+
+      - name: Publicar Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DockFolders/dist/DockFolders-*.dmg
+          generate_release_notes: true
