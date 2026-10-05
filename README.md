@@ -9,6 +9,8 @@
 Clique no ícone do Dock, escolha a pasta e abra no Finder, no Terminal, no Xcode, no
 VS Code — ou em qualquer outro app — com um clique.
 
+🌐 **Site:** [dockfolders.vercel.app](https://dockfolders.vercel.app/)
+
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-000000?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
 ![AppKit](https://img.shields.io/badge/UI-AppKit-1575F9)
