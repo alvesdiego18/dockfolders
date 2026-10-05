@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="site/assets/icon.png" alt="Logo do DockFolders" width="128" height="128">
+
 # DockFolders
 
 **Atalhos para suas pastas de projeto, direto do Dock do macOS.**
