@@ -1,146 +1,244 @@
+<div align="center">
+
 # DockFolders
 
-Um ícone no Dock do Mac que abre um balão com atalhos para pastas de projeto. Cada
-pasta pode ser aberta com até três aplicativos diferentes — a pasta em si, um
-`.xcworkspace` no Xcode, o Terminal, o VS Code — com um clique.
+**Atalhos para suas pastas de projeto, direto do Dock do macOS.**
+
+Clique no ícone do Dock, escolha a pasta e abra no Finder, no Terminal, no Xcode, no
+VS Code — ou em qualquer outro app — com um clique.
+
+![macOS 13+](https://img.shields.io/badge/macOS-13%2B-000000?logo=apple&logoColor=white)
+![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
+![AppKit](https://img.shields.io/badge/UI-AppKit-1575F9)
+![Sem dependências](https://img.shields.io/badge/depend%C3%AAncias-nenhuma-brightgreen)
+
+</div>
+
+<!-- TODO: adicionar um screenshot ou GIF do balão aberto, ex.: docs/screenshot.png -->
+
+## Sumário
+
+- [Visão geral](#visão-geral)
+- [Funcionalidades](#funcionalidades)
+- [Requisitos](#requisitos)
+- [Instalação](#instalação)
+- [Uso](#uso)
+- [Permissões](#permissões)
+- [Dados e privacidade](#dados-e-privacidade)
+- [Desenvolvimento](#desenvolvimento)
+- [Limitações conhecidas](#limitações-conhecidas)
+- [Contribuindo](#contribuindo)
+- [Licença](#licença)
+
+## Visão geral
+
+O DockFolders é um app nativo para macOS, escrito em Swift e AppKit, sem
+dependências externas. Ele fica no Dock e, ao ser clicado, abre um balão ancorado
+ao ícone com suas pastas de projeto — soltas ou organizadas em grupos.
+
+Cada pasta tem uma lista própria de **aberturas**: os aplicativos com que ela pode
+ser aberta. Uma abertura pode apontar para a pasta inteira ou para um arquivo
+específico dentro dela (por exemplo, o `.xcworkspace` para o Xcode), e a abertura
+do Terminal pode executar um comando assim que entra na pasta (por exemplo,
+`claude` ou `npm run dev`).
 
 ## Funcionalidades
 
-- **Ícone fixo no Dock.** Clicar abre um balão ancorado ao ícone; clicar de novo, ou
-  apertar ESC, ou clicar fora, fecha.
-- **Duas zonas.** Pastas soltas no topo, grupos de projeto abaixo. Um grupo pode
-  reunir várias pastas do mesmo projeto (por exemplo, `App iOS`, `App Android` e o
-  backend de um mesmo produto).
-- **Accordion exclusivo.** Abrir um grupo fecha os demais — é o que garante que o
-  balão nunca precise de barra de rolagem, não importa quantos grupos existam.
-- **Até três formas de abrir cada pasta.** A principal abre ao clicar no nome; as
-  demais aparecem como ícones à direita. Cada uma pode apontar para a pasta inteira
-  ou para um arquivo específico dentro dela (o Xcode, por exemplo, precisa do
-  `.xcworkspace`, não da pasta).
-- **Atalho de Terminal.** Um botão dedicado adiciona o Terminal como abertura sem
-  precisar navegar até `/Applications`. Aceita um comando opcional: o Terminal abre
-  na pasta e já roda o comando (por exemplo `claude`).
-- **Arrastar para organizar.** Pastas soltas viram parte de um grupo por drag &
-  drop; pairar sobre um grupo fechado o expande sozinho (spring-loading, como no
-  Finder).
-- **Grupo mais usado sobe.** Ao reabrir o balão (não durante o uso — só na
-  transição de fechado para aberto), o grupo que ficou aberto da última vez pula
-  para o topo da lista.
-- **Invisível em compartilhamento de tela.** O balão nunca aparece numa
-  transmissão do Meet, do Teams ou numa gravação de tela — nem sequer no ícone do
-  Dock, que continua visível, mas some tudo que está dentro do balão.
+- **Acesso pelo Dock** — um clique no ícone abre o balão; clicar de novo, clicar
+  fora ou pressionar `Esc` fecha.
+- **Pastas e grupos** — pastas soltas no topo e grupos de projeto abaixo. Um grupo
+  reúne pastas relacionadas, como o app iOS, o app Android e o backend de um mesmo
+  produto.
+- **Accordion exclusivo** — abrir um grupo fecha os demais, então o balão nunca
+  precisa de barra de rolagem.
+- **Múltiplas aberturas por pasta** — clicar no nome usa a abertura principal;
+  passar o mouse sobre a pasta mostra todas as aberturas disponíveis.
+- **Arquivo específico** — uma abertura pode mirar um arquivo dentro da pasta em vez
+  da pasta inteira.
+- **Terminal com comando** — abre o Terminal já na pasta e, opcionalmente, executa
+  um comando.
+- **Arrastar e soltar** — reorganize pastas entre grupos e reordene aberturas
+  arrastando. Pairar sobre um grupo fechado o expande automaticamente
+  (spring-loading, como no Finder).
+- **Abrir tudo** — abre todas as pastas de um grupo de uma vez, cada uma com sua
+  abertura principal.
+- **Grupo recente no topo** — ao reabrir o balão, o último grupo usado sobe para o
+  topo da lista.
+- **Protegido em compartilhamento de tela** — o conteúdo do balão não aparece em
+  chamadas do Meet ou do Teams nem em gravações de tela.
+- **Iniciar com o sistema** — opção para abrir o app automaticamente no login.
 
 ## Requisitos
 
-- macOS 13 ou mais recente (testado em macOS 26)
-- Xcode ou as Command Line Tools da Apple instaladas (para o `swiftc`)
+- macOS 13 Ventura ou mais recente (desenvolvido e testado no macOS 26)
+- Para compilar: Xcode ou Command Line Tools da Apple (`xcode-select --install`)
 
 ## Instalação
 
-### A partir de um `.dmg` já pronto
+### Pelo instalador (`.dmg`)
 
-Se alguém te passou um `DockFolders-<versão>.dmg`, veja o `Leia-me.txt` dentro
-dele — ele explica como liberar o app no Gatekeeper na primeira abertura (o app
-não tem assinatura de uma conta de desenvolvedor Apple, então o macOS avisa antes
-de abrir; isso é esperado, não um app corrompido).
+1. Baixe o `DockFolders-<versão>.dmg` na página de
+   [Releases](https://github.com/alvesdiego18/dockfolders/releases).
+2. Abra o `.dmg` e arraste o `DockFolders.app` para a pasta **Applications**.
+3. Na primeira abertura, libere o app no Gatekeeper (veja abaixo).
+4. Com o app aberto, clique com o botão direito no ícone do Dock →
+   **Opções → Manter no Dock**.
+
+> [!IMPORTANT]
+> O app é assinado apenas localmente (ad-hoc), sem Developer ID nem notarização da
+> Apple. Por isso o macOS avisa que o desenvolvedor não pôde ser verificado na
+> primeira abertura — isso é esperado e não indica um app corrompido. Para liberar:
+>
+> - clique com o botão direito em `DockFolders.app` → **Abrir** → **Abrir**; ou
+> - vá em **Ajustes do Sistema → Privacidade e Segurança** e clique em
+>   **Abrir Mesmo Assim** no aviso sobre o DockFolders.
+>
+> Se preferir não confiar em um binário pronto, compile a partir do código-fonte.
 
 ### A partir do código-fonte
 
-```
+```bash
+git clone https://github.com/alvesdiego18/dockfolders.git
+cd dockfolders
 ./DockFolders/build.sh
 ```
 
-O script pergunta a versão a buildar, já preenchida com a atual (arquivo
-`DockFolders/VERSION`) — Enter mantém, ou edite para subir. O valor é gravado de
-volta em `VERSION` e usado no `Info.plist` e no nome do `.dmg`. Para pular o
-prompt (CI, por exemplo), passe `VERSION=1.2 ./DockFolders/build.sh`.
+O script gera:
 
-Gera `DockFolders/dist/DockFolders.app` (build de release, protegido contra
-captura de tela) e `DockFolders/dist/DockFolders-<versão>.dmg` (pronto para
-instalar em outro Mac). Para testar localmente sem gerar o `.dmg`:
+| Artefato | Descrição |
+|---|---|
+| `DockFolders/dist/DockFolders.app` | Build de release |
+| `DockFolders/dist/DockFolders-<versão>.dmg` | Instalador pronto para outro Mac |
 
-```
-DEBUG=1 ./DockFolders/build.sh
-open DockFolders/dist/DockFolders.app
-```
-
-`DEBUG=1` também libera a captura de tela do balão — necessário para conferir a
-interface por screenshot durante o desenvolvimento; o build sem essa flag é o
-que efetivamente protege sua tela.
-
-Depois de instalar, clique com o botão direito no ícone do Dock → **Opções →
-Manter no Dock**, senão ele some quando o app for encerrado.
+Depois, mova o `.app` para `/Applications` e fixe o ícone no Dock.
 
 ## Uso
 
-- **Adicionar uma pasta:** botão `+` no rodapé → *Adicionar pasta…* → escolha a
-  pasta → configure com quais apps ela abre.
-- **Configurar aberturas:** clique com o botão direito numa pasta →
-  *Configurar aberturas…*. A primeira da lista é a principal (a que o clique no
-  nome dispara); as outras aparecem como ícones à direita, com tooltip ao passar
-  o mouse.
-- **Terminal com comando:** na janela de aberturas, botão *Terminal* → digite um
-  comando (ex.: `claude`) ou deixe em branco. Na primeira vez o macOS pede
-  autorização para o DockFolders controlar o Terminal. Para trocar o comando,
-  remova a abertura e adicione de novo.
-- **Criar um grupo:** `+` → *Criar grupo…*. Ele nasce vazio — arraste pastas para
-  dentro dele.
-- **Abrir tudo de um grupo:** botão no canto direito do cabeçalho do grupo, abre
-  cada pasta com sua abertura principal de uma vez.
-- **Manter o balão aberto:** segure ⌘ ao clicar numa pasta.
-- **Renomear um grupo:** duplo-clique no nome, ou pelo menu de contexto do
-  cabeçalho.
-- **Posicionamento preciso da seta:** conceda Acessibilidade ao DockFolders em
-  Ajustes do Sistema → Privacidade e Segurança → Acessibilidade (o app pede isso
-  sozinho ao clicar no aviso "posicionamento aproximado", quando aparece). Sem
-  essa permissão o app funciona normalmente, só sem a seta apontando para o
-  ícone.
+| Ação | Como fazer |
+|---|---|
+| Adicionar uma pasta | Botão `+` no rodapé → **Adicionar pasta…** |
+| Criar um grupo | `+` → **Criar grupo…** e arraste pastas para dentro dele |
+| Abrir com a abertura principal | Clique no nome da pasta |
+| Abrir com outro app | Passe o mouse sobre a pasta e clique no ícone do app |
+| Vincular um novo app | Nas aberturas da pasta, clique no botão `+` |
+| Definir a abertura principal | Arraste o ícone do app para a primeira posição |
+| Mirar um arquivo específico | Botão direito no ícone do app → **Selecionar arquivo específico…** |
+| Configurar o comando do Terminal | Botão direito no ícone do Terminal → **Configurar comando…** |
+| Manter o balão aberto | Segure `⌘` ao clicar |
+| Abrir todas as pastas de um grupo | Botão à direita do cabeçalho do grupo |
+| Renomear um grupo | Duplo clique no nome ou menu de contexto do cabeçalho |
+| Remover uma pasta ou tirá-la do grupo | Botão direito na pasta |
 
-## Onde ficam os dados
+Novas pastas começam com duas aberturas: **Finder** (principal) e **Terminal**.
+
+## Permissões
+
+Todas as permissões são opcionais; o app funciona sem elas, com recursos reduzidos.
+
+| Permissão | Para quê | Sem ela |
+|---|---|---|
+| **Acessibilidade** | Localizar o ícone no Dock e apontar a seta do balão para ele | O balão é posicionado de forma aproximada, sem seta |
+| **Automação → Terminal** | Executar o comando configurado ao abrir o Terminal | O Terminal com comando não abre |
+
+A permissão de Acessibilidade pode ser concedida pelo aviso
+"posicionamento aproximado" no rodapé do balão, ou em **Ajustes do Sistema →
+Privacidade e Segurança → Acessibilidade**. A de Automação é solicitada pelo macOS
+na primeira vez que uma abertura de Terminal com comando é usada.
+
+## Dados e privacidade
+
+O DockFolders não faz conexões de rede nem coleta dados. A configuração fica em um
+único arquivo JSON local:
 
 ```
 ~/Library/Application Support/DockFolders/folders.json
 ```
 
-Texto simples, editável à mão se precisar. Se o arquivo estiver corrompido, o
-app preserva o original como `folders.json.corrupt-<timestamp>` em vez de
-sobrescrever, e recomeça vazio.
+O arquivo é legível e pode ser editado à mão. Se estiver corrompido, o app o
+preserva como `folders.json.corrupt-<timestamp>` e recomeça com a lista vazia, sem
+sobrescrever o original.
 
-## Arquitetura
+## Desenvolvimento
 
-| Arquivo | Responsabilidade |
-|---|---|
-| `Sources/main.swift` | Ciclo de vida do app, ações de menu, login item |
-| `Sources/Store.swift` | Modelo de dados e persistência em JSON |
-| `Sources/BalloonPanel.swift` | A janela do balão: forma, seta, `sharingType`, ancoragem |
-| `Sources/BalloonContent.swift` | Layout do conteúdo, drag & drop, menus de contexto |
-| `Sources/Rows.swift` | As linhas de pasta e de cabeçalho de grupo |
-| `Sources/Opening.swift` | Abrir uma pasta com um app; resolução de ícones |
-| `Sources/OpenerConfig.swift` | Janela de configuração das aberturas de uma pasta |
-| `Sources/DockTileLocator.swift` | Localiza o ícone do app no Dock via Accessibility API |
-| `Tests/main.swift` | Testes do `Store` (regras estruturais, persistência, migração) |
+O projeto não usa Xcode project nem Swift Package Manager: os fontes são
+compilados diretamente com `swiftc` pelo `build.sh`.
 
-Rodar os testes do modelo:
+### Build
 
+```bash
+# Build de desenvolvimento (sem .dmg; balão capturável em screenshots)
+DEBUG=1 ./DockFolders/build.sh
+open DockFolders/dist/DockFolders.app
+
+# Build de release com versão definida sem prompt (útil em CI)
+VERSION=1.2 ./DockFolders/build.sh
 ```
+
+A cada build o script pergunta a versão, sugerindo a atual de
+`DockFolders/VERSION`. O valor escolhido é gravado de volta nesse arquivo e usado
+no `Info.plist` e no nome do `.dmg`.
+
+> [!NOTE]
+> Apenas o build com `DEBUG=1` permite capturar o balão em screenshots. O build de
+> release sempre o oculta de capturas e compartilhamentos de tela.
+
+### Testes
+
+Os testes cobrem o modelo de dados (`Store`): regras estruturais, persistência e
+migração.
+
+```bash
 swiftc -O DockFolders/Sources/Store.swift DockFolders/Tests/main.swift -o /tmp/dockfolders-tests
 /tmp/dockfolders-tests
 ```
+
+### Estrutura do projeto
+
+```
+DockFolders/
+├── Sources/
+│   ├── main.swift              # Ciclo de vida do app, menus, login item
+│   ├── Store.swift             # Modelo de dados e persistência em JSON
+│   ├── BalloonPanel.swift      # Janela do balão: forma, seta, ancoragem, sharingType
+│   ├── BalloonContent.swift    # Conteúdo do balão, drag & drop, menus de contexto
+│   ├── Rows.swift              # Linhas de pasta e cabeçalhos de grupo
+│   ├── FolderDetailView.swift  # Popover de aberturas de uma pasta
+│   ├── Opening.swift           # Abertura de pastas com apps; resolução de ícones
+│   └── DockTileLocator.swift   # Localiza o ícone no Dock via Accessibility API
+├── Tests/
+│   └── main.swift              # Testes do Store
+├── Resources/
+│   └── AppIcon.icns
+├── VERSION
+└── build.sh
+```
+
+As decisões de design — incluindo medições empíricas do posicionamento no Dock e
+do comportamento de `sharingType`, e os riscos aceitos — estão documentadas em
+[`CONTEXT.md`](CONTEXT.md).
 
 ## Limitações conhecidas
 
 | Situação | Comportamento |
 |---|---|
-| Pasta renomeada ou movida | O item para de resolver; fica esmaecido e não clicável |
-| Volume externo desconectado | Toda pasta nele fica esmaecida, sem indicar a causa |
-| Árvore de Acessibilidade do Dock muda num update do macOS | O app cai no modo de posicionamento aproximado, sem seta |
-| App configurado como abertura foi desinstalado | A abertura cai para o Finder na hora de abrir |
-| Autorização de controlar o Terminal negada | A abertura de Terminal com comando não faz nada; libere em Ajustes do Sistema → Privacidade e Segurança → Automação |
-| Comando do Terminal precisa mudar | Não há edição no lugar — remova a abertura e adicione de novo |
-| Build de release | Sem assinatura de Developer ID nem notarização — Gatekeeper avisa na primeira abertura em outro Mac |
+| Pasta renomeada ou movida | O item fica esmaecido e deixa de ser clicável |
+| Volume externo desconectado | As pastas nele ficam esmaecidas, sem indicar a causa |
+| Atualização do macOS altera a árvore de Acessibilidade do Dock | O app volta ao posicionamento aproximado, sem seta |
+| App de uma abertura foi desinstalado | A abertura recorre ao Finder |
+| Release sem Developer ID e sem notarização | O Gatekeeper avisa na primeira abertura |
+| Interface | Disponível apenas em português |
 
-## Design e decisões
+## Contribuindo
 
-O histórico completo de decisões de produto — o porquê de cada escolha, o que foi
-medido empiricamente (posicionamento do Dock, comportamento do `sharingType`) e os
-riscos aceitos conscientemente — está em [`CONTEXT.md`](CONTEXT.md).
+Contribuições são bem-vindas.
+
+1. Abra uma [issue](https://github.com/alvesdiego18/dockfolders/issues) descrevendo
+   o bug ou a proposta antes de mudanças grandes.
+2. Faça um fork e crie um branch a partir de `main`.
+3. Se alterar o `Store.swift`, rode os testes.
+4. Confira a mudança com um build `DEBUG=1`.
+5. Abra um pull request explicando o que mudou e por quê.
+
+## Licença
+
+Distribuído sob a licença descrita em [`LICENSE`](LICENSE).

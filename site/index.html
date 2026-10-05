@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DockFolders</title>
+<meta name="description" content="DockFolders: atalhos para suas pastas de projeto, direto do Dock do macOS.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M2.5 6.2c0-1 .8-1.7 1.7-1.7h4.6c.5 0 .9.2 1.2.5l1.2 1.2h8.6c1 0 1.7.8 1.7 1.7v9.9c0 1-.8 1.7-1.7 1.7H4.2c-1 0-1.7-.8-1.7-1.7z" fill="var(--folder)"/><path d="M2.5 9c0-.9.8-1.7 1.7-1.7h15.6c1 0 1.7.8 1.7 1.7v8.8c0 1-.8 1.7-1.7 1.7H4.2c-1 0-1.7-.8-1.7-1.7z" fill="#7cc7f7"/></symbol>
+    <symbol id="a-finder" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#4aa8f0"/><path d="M16 0h9a7 7 0 0 1 7 7v18a7 7 0 0 1-7 7h-9z" fill="#e9f3fb"/><path d="M17 0c-3 7-4 12-3.4 18H18c-.4 4.5.2 9 1.5 14" fill="none" stroke="#1d2a3a" stroke-width="1.5"/><circle cx="9.5" cy="12" r="1.6" fill="#1d2a3a"/><circle cx="23" cy="12" r="1.6" fill="#1d2a3a"/><path d="M8 21c4.5 3.4 11.5 3.4 16 0" fill="none" stroke="#1d2a3a" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="a-terminal" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#2b2f36"/><rect x="1" y="1" width="30" height="30" rx="6" fill="none" stroke="#5c636e" stroke-width=".8"/><path d="M8 11l5 4.5L8 20" fill="none" stroke="#f1f3f5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 21h8" stroke="#f1f3f5" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="a-xcode" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1c7bf0"/><path d="M9 25l12-17" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M18.5 6.5l5 3.5-2.5 3.5-5-3.5z" fill="#cfe3ff"/><path d="M7 9h6M7 13h4" stroke="#9cc6ff" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="a-vscode" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#f4f6f9"/><path d="M22 5l5 2.4v17.2L22 27 11 17l-5 4-1.6-1V12l1.6-1 5 4z" fill="#2a8ad8"/><path d="M22 5v22L11 17z" fill="#1565b5"/><path d="M6 11l16 13" stroke="#5fb3f3" stroke-width="1"/></symbol>
+    <symbol id="a-studio" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#e8f5ec"/><circle cx="16" cy="17" r="8" fill="#3ddc84"/><circle cx="13" cy="16" r="1.2" fill="#0d3b22"/><circle cx="19" cy="16" r="1.2" fill="#0d3b22"/><path d="M11 10l2 3M21 10l-2 3" stroke="#3ddc84" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="a-safari" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#f4f6f9"/><circle cx="16" cy="16" r="11" fill="#2d9cf0"/><path d="M16 16l5-6-1 7z" fill="#ef4444"/><path d="M16 16l-5 6 1-7z" fill="#fff"/></symbol>
+    <symbol id="a-mail" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#3b9cf5"/><rect x="6" y="9" width="20" height="14" rx="2" fill="#fff"/><path d="M6.5 10l9.5 7 9.5-7" fill="none" stroke="#3b9cf5" stroke-width="1.4"/></symbol>
+    <symbol id="a-trash" viewBox="0 0 32 32"><path d="M6 8h20l-1.8 20.2a2 2 0 0 1-2 1.8H9.8a2 2 0 0 1-2-1.8z" fill="#8a8d93"/><path d="M6 8h20l-.2 2H6.2z" fill="#5f6268"/><rect x="5" y="5" width="22" height="3.5" rx="1.5" fill="#a9acb2"/><path d="M11 13l.6 13M16 13v13M21 13l-.6 13" stroke="#6c6f75" stroke-width="1.2"/></symbol>
+    <symbol id="g-all" viewBox="0 0 15 17"><rect x="1" y="4.5" width="13" height="11.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 2.6h9M4.5 1h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
+    <symbol id="g-plus" viewBox="0 0 16 16"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="g-gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5l1.6 2.3 2.8-.6.6 2.8 2.5 1.4-1 2.6 1 2.6-2.5 1.4-.6 2.8-2.8-.6L12 21.5l-1.6-2.3-2.8.6-.6-2.8-2.5-1.4 1-2.6-1-2.6 2.5-1.4.6-2.8 2.8.6z" stroke-linejoin="round"/></g></symbol>
+    <symbol id="g-go" viewBox="0 0 8 12"><path d="M1.5 1.5L6 6l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="wrap top">
+  <a class="brand" href="#inicio"><img src="assets/icon.png" alt="">DockFolders</a>
+  <nav aria-label="Principal">
+    <a href="#recursos">Recursos</a>
+    <a href="#aberturas">Aberturas</a>
+    <a href="#instalar">Instalar</a>
+    <a class="gh" href="https://github.com/alvesdiego18/dockfolders">GitHub</a>
+  </nav>
+</header>
+
+<main id="inicio">
+  <div class="wrap hero">
+    <div>
+      <h1>Suas pastas de projeto, <em>a um clique</em> do Dock.</h1>
+      <p class="lede">O DockFolders abre um balão no Dock com suas pastas e grupos de projeto. Cada pasta abre no Finder, no Terminal, no Xcode ou no app que você escolher.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/alvesdiego18/dockfolders/releases">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0l-3.2-3.2M8 10l3.2-3.2M3 13h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Baixar para macOS
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/alvesdiego18/dockfolders">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg>
+          Ver código-fonte
+        </a>
+      </div>
+      <div class="meta">
+        <span>macOS 13 ou mais recente</span>
+        <span>Swift + AppKit nativo</span>
+        <span>Código aberto</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="desk" id="desk">
+        <div class="menubar"><span>DockFolders</span><span class="rec" id="clock">seg 10:42</span></div>
+        <button class="share-toggle" id="shareToggle" aria-pressed="false" type="button">
+          <span class="switch" aria-hidden="true"></span>Simular compartilhamento de tela
+        </button>
+        <div class="share-note" id="shareNote" hidden>Na transmissão, o balão fica invisível. Só você vê suas pastas.</div>
+
+        <div class="stage">
+          <div class="balloon" id="balloon" role="dialog" aria-label="Balão do DockFolders">
+            <div class="content" id="balloonContent"></div>
+          </div>
+          <div class="popover" id="popover" hidden></div>
+          <div class="dock" aria-label="Dock">
+            <div class="dock-app opt" aria-hidden="true"><svg><use href="#a-finder"/></svg></div>
+            <div class="dock-app" aria-hidden="true"><svg><use href="#a-vscode"/></svg></div>
+            <div class="dock-app" aria-hidden="true"><svg><use href="#a-terminal"/></svg></div>
+            <button class="dock-app dock-btn" id="dockBtn" type="button" aria-label="Abrir ou fechar o DockFolders" aria-expanded="true"><img src="assets/icon.png" alt=""></button>
+            <div class="dock-app opt" aria-hidden="true"><svg><use href="#a-xcode"/></svg></div>
+            <span class="dock-sep" aria-hidden="true"></span>
+            <div class="dock-app" aria-hidden="true"><svg><use href="#a-trash"/></svg></div>
+          </div>
+        </div>
+        <div class="status" id="status" aria-live="polite"></div>
+      </div>
+      <p class="hint">Demonstração interativa: clique no ícone do Dock, abra os grupos e passe o mouse sobre uma pasta.</p>
+    </div>
+  </div>
+
+  <section id="recursos">
+    <div class="wrap">
+      <p class="eyebrow">Recursos</p>
+      <h2>Feito para quem alterna entre muitos projetos durante o dia.</h2>
+      <div class="features">
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="15" width="18" height="5" rx="2"/><path d="M8 11h8l-4 3z"/><rect x="6" y="3" width="12" height="8" rx="2"/></svg>
+          <h3>Mora no Dock</h3>
+          <p>Um clique no ícone abre o balão ancorado a ele. Clicar fora, clicar de novo ou pressionar <code>Esc</code> fecha.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M4 10h16"/><path d="M7 15h13M7 19h13"/><path d="M4 15v4"/></svg>
+          <h3>Pastas e grupos</h3>
+          <p>Pastas soltas no topo e grupos abaixo. Junte num grupo o app iOS, o app Android e o backend do mesmo produto.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          <h3>Sem barra de rolagem</h3>
+          <p>Abrir um grupo fecha os outros. O balão continua compacto, não importa quantos grupos você tenha.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v6M9 6l3-3 3 3"/><path d="M5 11h14v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/></svg>
+          <h3>Arrastar e soltar</h3>
+          <p>Mova pastas entre grupos e reordene as aberturas arrastando. Um grupo fechado se abre quando você para sobre ele.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M4 4l16 13"/></svg>
+          <h3>Invisível em chamadas</h3>
+          <p>O conteúdo do balão não aparece no Meet, no Teams nem em gravações de tela. Seus caminhos de projeto ficam só com você.</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6 4 4 6-8"/><path d="M15 7h5v5"/></svg>
+          <h3>O grupo recente sobe</h3>
+          <p>Ao reabrir o balão, o último grupo usado vai para o topo. Ele também pode iniciar junto com o macOS.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="aberturas">
+    <div class="wrap">
+      <p class="eyebrow">Aberturas</p>
+      <h2>Cada pasta abre do jeito que o projeto pede.</h2>
+      <p class="section-lede">Uma abertura é um app vinculado à pasta. O clique no nome usa a primeira da lista. As demais aparecem quando você passa o mouse sobre a pasta.</p>
+      <div class="split">
+        <ul class="openers-list">
+          <li><svg><use href="#a-finder"/></svg><div><strong>A pasta inteira</strong><span>Toda pasta nova começa com o Finder como principal e o Terminal como segunda opção.</span></div></li>
+          <li><svg><use href="#a-xcode"/></svg><div><strong>Um arquivo específico</strong><span>O Xcode precisa do <code>.xcworkspace</code>, não da pasta. A abertura pode apontar direto para ele.</span></div></li>
+          <li><svg><use href="#a-terminal"/></svg><div><strong>Terminal com comando</strong><span>Abre o Terminal na pasta e já executa um comando, como <code>claude</code> ou <code>npm run dev</code>.</span></div></li>
+          <li><svg><use href="#a-vscode"/></svg><div><strong>Qualquer outro app</strong><span>VS Code, Android Studio, Fork, Cursor… Escolha em <code>/Applications</code> com o botão <code>+</code>.</span></div></li>
+        </ul>
+        <div class="code">
+          <div class="code-head"><span>~/Library/Application Support/DockFolders/folders.json</span></div>
+<pre><span class="c">// trecho de exemplo</span>
+{
+  <span class="k">"path"</span>: <span class="s">"/Users/ana/dev/loja/loja-ios"</span>,
+  <span class="k">"openers"</span>: [
+    {
+      <span class="k">"bundleID"</span>: <span class="s">"com.apple.dt.Xcode"</span>,
+      <span class="k">"targetPath"</span>: <span class="s">"/Users/ana/dev/loja/loja-ios/Loja.xcworkspace"</span>
+    },
+    {
+      <span class="k">"bundleID"</span>: <span class="s">"com.apple.Terminal"</span>,
+      <span class="k">"command"</span>: <span class="s">"claude"</span>
+    },
+    { <span class="k">"bundleID"</span>: <span class="s">"com.microsoft.VSCode"</span> }
+  ]
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="instalar">
+    <div class="wrap">
+      <p class="eyebrow">Instalar</p>
+      <h2>Dois caminhos para começar.</h2>
+      <div class="install">
+        <div>
+          <h3>Pelo instalador</h3>
+          <ol class="steps">
+            <li>Baixe o <code>DockFolders-&lt;versão&gt;.dmg</code> em <a href="https://github.com/alvesdiego18/dockfolders/releases">Releases</a>.</li>
+            <li>Arraste o <code>DockFolders.app</code> para Applications.</li>
+            <li>Na primeira abertura, libere o app no Gatekeeper.</li>
+            <li>Botão direito no ícone do Dock → Opções → Manter no Dock.</li>
+          </ol>
+          <div class="note">
+            <strong>Por que o macOS avisa na primeira abertura?</strong>
+            O app tem só assinatura local, sem Developer ID nem notarização da Apple. Para liberar, clique com o botão direito no app e escolha Abrir. Outra opção é ir em Ajustes do Sistema → Privacidade e Segurança → Abrir Mesmo Assim.
+          </div>
+        </div>
+        <div>
+          <h3>A partir do código-fonte</h3>
+          <p>Precisa apenas do Xcode ou das Command Line Tools. O projeto não tem dependências externas.</p>
+          <div class="code">
+            <div class="code-head"><span>Terminal</span><button class="copy" type="button" data-copy="build">Copiar</button></div>
+<pre id="build">git clone https://github.com/alvesdiego18/dockfolders.git
+cd dockfolders
+./DockFolders/build.sh</pre>
+          </div>
+          <p>O script gera o <code>DockFolders.app</code> e o instalador <code>.dmg</code> em <code>DockFolders/dist/</code>.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Permissão</th><th>Para quê</th><th>Sem ela</th></tr></thead>
+          <tbody>
+            <tr><td>Acessibilidade</td><td>Localizar o ícone no Dock e apontar a seta do balão para ele</td><td>O balão abre em posição aproximada, sem seta</td></tr>
+            <tr><td>Automação → Terminal</td><td>Executar o comando configurado ao abrir o Terminal</td><td>O Terminal com comando não abre</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="privacy">
+        <div>
+          <h3>Nada sai do seu Mac.</h3>
+          <p>O DockFolders não se conecta à internet e não coleta dados. Toda a configuração fica num único arquivo JSON local, que você pode ler e editar à mão.</p>
+        </div>
+        <div>
+          <h3>Seu arquivo nunca é descartado.</h3>
+          <p>Se o <code>folders.json</code> estiver corrompido, o app guarda uma cópia como <code>folders.json.corrupt-&lt;timestamp&gt;</code> antes de recomeçar com a lista vazia.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap closing">
+      <h2>Código aberto. Contribuições são bem-vindas.</h2>
+      <div class="cta" style="margin-top:0">
+        <a class="btn btn-primary" href="https://github.com/alvesdiego18/dockfolders">Abrir no GitHub</a>
+        <a class="btn btn-ghost" href="https://github.com/alvesdiego18/dockfolders/issues">Reportar um problema</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>DockFolders · feito por <a href="https://github.com/alvesdiego18">Diego Alves</a></span>
+    <span>Requer macOS 13 ou mais recente</span>
+  </div>
+</footer>
+
+<script src="assets/script.js"></script>
+</body>
+</html>
